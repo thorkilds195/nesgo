@@ -6,7 +6,7 @@ import "testing"
 func TestLDAImmediateLoadDataWhenBit7NotSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x05, 0x00}
-	c.Interpet(vec)
+	c.LoadAndRun(vec)
 	if !(c.register_a == 0x05) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -21,7 +21,7 @@ func TestLDAImmediateLoadDataWhenBit7NotSet(t *testing.T) {
 func TestLDAImmediateLoadDataWhen0(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x00, 0x00}
-	c.Interpet(vec)
+	c.LoadAndRun(vec)
 	if !(c.register_a == 0x00) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -36,7 +36,7 @@ func TestLDAImmediateLoadDataWhen0(t *testing.T) {
 func TestLDAImmediateLoadDataWhenBit7Set(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0b_1100_0000, 0x00}
-	c.Interpet(vec)
+	c.LoadAndRun(vec)
 	if !(c.register_a == 0b_1100_0000) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -48,11 +48,27 @@ func TestLDAImmediateLoadDataWhenBit7Set(t *testing.T) {
 	}
 }
 
+func TestLDAZeroPageLoadDataWhenBit7NotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA5, 0x10, 0x00}
+	c.mem_write(0x10, 10)
+	c.LoadAndRun(vec)
+	if !(c.register_a == 10) {
+		t.Error(`Register not set to correct value`)
+	}
+	if !((c.status & 0b0000_0010) == 0) {
+		t.Error(`Zero flag set`)
+	}
+	if !((c.status & 0b1000_0000) == 0) {
+		t.Error(`Negative flag set`)
+	}
+}
+
 // TAX
 func TestTAXLoadDataWhenBit7NotSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x05, 0xAA, 0x00}
-	c.Interpet(vec)
+	c.LoadAndRun(vec)
 	if !(c.register_x == 0x05) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -67,7 +83,7 @@ func TestTAXLoadDataWhenBit7NotSet(t *testing.T) {
 func TestTAXLoadDataWhen0(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x00, 0xAA, 0x00}
-	c.Interpet(vec)
+	c.LoadAndRun(vec)
 	if !(c.register_x == 0x00) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -82,7 +98,7 @@ func TestTAXLoadDataWhen0(t *testing.T) {
 func TestTAXLoadDataWhenBit7Set(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0b_1100_0000, 0xAA, 0x00}
-	c.Interpet(vec)
+	c.LoadAndRun(vec)
 	if !(c.register_x == 0b_1100_0000) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -97,8 +113,7 @@ func TestTAXLoadDataWhenBit7Set(t *testing.T) {
 // INX
 func TestInxAdd1(t *testing.T) {
 	c := InitCPU()
-	c.register_x = 0
-	c.Interpet([]uint8{0xe8, 0x00})
+	c.LoadAndRun([]uint8{0xe8, 0x00})
 	if !(c.register_x == 1) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -112,8 +127,7 @@ func TestInxAdd1(t *testing.T) {
 
 func TestInxOverflowTo0(t *testing.T) {
 	c := InitCPU()
-	c.register_x = 0xff
-	c.Interpet([]uint8{0xe8, 0x00})
+	c.LoadAndRun([]uint8{0xa9, 0xff, 0xAA, 0xe8, 0x00})
 	if !(c.register_x == 0) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -127,8 +141,7 @@ func TestInxOverflowTo0(t *testing.T) {
 
 func TestInxOverflow(t *testing.T) {
 	c := InitCPU()
-	c.register_x = 0xff
-	c.Interpet([]uint8{0xe8, 0xe8, 0x00})
+	c.LoadAndRun([]uint8{0xa9, 0xff, 0xAA, 0xe8, 0xe8, 0x00})
 	if !(c.register_x == 1) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -142,8 +155,7 @@ func TestInxOverflow(t *testing.T) {
 
 func TestInxWhenBit7Set(t *testing.T) {
 	c := InitCPU()
-	c.register_x = 200
-	c.Interpet([]uint8{0xe8, 0x00})
+	c.LoadAndRun([]uint8{0xa9, 200, 0xAA, 0xe8, 0x00})
 	if !(c.register_x == 201) {
 		t.Error(`Register not set to correct value`)
 	}
@@ -158,7 +170,7 @@ func TestInxWhenBit7Set(t *testing.T) {
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
-	c.Interpet([]uint8{0xa9, 0xc0, 0xaa, 0xe8, 0x00})
+	c.LoadAndRun([]uint8{0xa9, 0xc0, 0xaa, 0xe8, 0x00})
 	if !(c.register_x == 0xc1) {
 		t.Error(`Register not set to correct value`)
 	}
