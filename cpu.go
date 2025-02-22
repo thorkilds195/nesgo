@@ -11,16 +11,14 @@ const (
 	ABSOLUTE
 	ABSOLUTEX
 	ABSOLUTEY
-	INDIRECT
-	INDEXEDINDIRECT
-	INDIRECTINDEXED
-	ACCUMULATOR
-	IMPLICIT
+	INDIRECTX
+	INDIRECTY
 )
 
 type CPU struct {
 	register_a      uint8
 	register_x      uint8
+	register_y      uint8
 	status          uint8
 	program_counter uint16
 	memory          [0xFFFF]uint8
@@ -53,6 +51,22 @@ func (c *CPU) run() {
 			c.lda(IMMEDIATE)
 		case 0xA5:
 			c.lda(ZEROPAGE)
+		case 0xB5:
+			c.lda(ZEROPAGEX)
+		case 0xAD:
+			c.lda(ABSOLUTE)
+		case 0xBD:
+			c.lda(ABSOLUTEX)
+		case 0xB9:
+			c.lda(ABSOLUTEY)
+		case 0xA1:
+			c.lda(INDIRECTX)
+		case 0xB1:
+			c.lda(INDIRECTY)
+		case 0xA2:
+			c.ldx(IMMEDIATE)
+		case 0xA0:
+			c.ldy(IMMEDIATE)
 		case 0xAA:
 			c.tax()
 		case 0xE8:
@@ -80,9 +94,9 @@ func (c *CPU) mem_write(addr uint16, v uint8) {
 }
 
 func (c *CPU) mem_read_16(addr uint16) uint16 {
-	lo := uint16(c.memory[addr])
-	hi := uint16(c.memory[addr+1])
-	return (hi << 8) | lo
+	lo := c.memory[addr]
+	hi := c.memory[addr+1]
+	return make_16_bit(hi, lo)
 }
 
 func (c *CPU) mem_write_16(addr uint16, v uint16) {
@@ -92,20 +106,84 @@ func (c *CPU) mem_write_16(addr uint16, v uint16) {
 	c.memory[addr+1] = hi
 }
 
+func make_16_bit(hi, lo uint8) uint16 {
+	return (uint16(hi) << 8) | uint16(lo)
+}
+
 func (c *CPU) lda(m AddressingMode) {
 	var val uint8
+	next_val := c.mem_read(c.program_counter)
 	switch m {
 	case IMMEDIATE:
-		val = c.mem_read(c.program_counter)
+		val = next_val
 	case ZEROPAGE:
-		addr := c.mem_read(c.program_counter)
-		val = c.mem_read(uint16(addr))
+		val = c.mem_read(uint16(next_val))
+	case ZEROPAGEX:
+		val = c.mem_read(uint16(next_val + c.register_x))
+	case ABSOLUTE:
+		addr := c.mem_read_16(c.program_counter)
+		c.program_counter++
+		val = c.mem_read(addr)
+	case ABSOLUTEX:
+		addr := c.mem_read_16(c.program_counter)
+		c.program_counter++
+		val = c.mem_read(addr + uint16(c.register_x))
+	case ABSOLUTEY:
+		addr := c.mem_read_16(c.program_counter)
+		c.program_counter++
+		val = c.mem_read(addr + uint16(c.register_y))
+	case INDIRECTX:
+		addr := next_val + c.register_x
+		target := c.mem_read_16(uint16(addr))
+		c.program_counter++
+		val = c.mem_read(target)
+		c.program_counter++
+	case INDIRECTY:
+		addr := next_val + c.register_y
+		target := c.mem_read_16(uint16(addr))
+		c.program_counter++
+		val = c.mem_read(target)
+		c.program_counter++
 	default:
 		panic("Unknown addresing mode")
 	}
 	c.program_counter++
 	c.register_a = val
 	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) ldx(m AddressingMode) {
+	var val uint8
+	next_val := c.mem_read(c.program_counter)
+	switch m {
+	case IMMEDIATE:
+		val = next_val
+	case ZEROPAGE:
+		val = c.mem_read(uint16(next_val))
+
+	default:
+		panic("Unknown addresing mode")
+	}
+	c.program_counter++
+	c.register_x = val
+	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) ldy(m AddressingMode) {
+	var val uint8
+	next_val := c.mem_read(c.program_counter)
+	switch m {
+	case IMMEDIATE:
+		val = next_val
+	case ZEROPAGE:
+		val = c.mem_read(uint16(next_val))
+
+	default:
+		panic("Unknown addresing mode")
+	}
+	c.program_counter++
+	c.register_y = val
+	c.set_zero_and_negative_flag(c.register_y)
 }
 
 func (c *CPU) tax() {
