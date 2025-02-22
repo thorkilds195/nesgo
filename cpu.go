@@ -13,7 +13,35 @@ const (
 	ABSOLUTEY
 	INDIRECTX
 	INDIRECTY
+	NONE
 )
+
+type OpCode struct {
+	code   uint8
+	mode   AddressingMode
+	bytes  uint8
+	cycles uint8
+	f_call func(*CPU, OpCode)
+}
+
+var OPTABLE = map[uint8]OpCode{
+	0xA9: {0xA9, IMMEDIATE, 2, 2, (*CPU).lda},
+	0xA5: {0xA5, ZEROPAGE, 2, 2, (*CPU).lda},
+	0xB5: {0xB5, ZEROPAGEX, 2, 2, (*CPU).lda},
+	0xAD: {0xAD, ABSOLUTE, 2, 2, (*CPU).lda},
+	0xBD: {0xBD, ABSOLUTEX, 2, 2, (*CPU).lda},
+	0xB9: {0xB9, ABSOLUTEY, 2, 2, (*CPU).lda},
+	0xA1: {0xA1, INDIRECTX, 2, 2, (*CPU).lda},
+	0xB1: {0xB1, INDIRECTY, 2, 2, (*CPU).lda},
+	0xA2: {0xA2, IMMEDIATE, 2, 2, (*CPU).ldx},
+	0xA6: {0xA6, ZEROPAGE, 2, 2, (*CPU).ldx},
+	0xB6: {0xB6, ZEROPAGEY, 2, 2, (*CPU).ldx},
+	0xAE: {0xAE, ABSOLUTE, 2, 2, (*CPU).ldx},
+	0xBE: {0xBE, ABSOLUTEY, 2, 2, (*CPU).ldx},
+	0xA0: {0xBE, IMMEDIATE, 2, 2, (*CPU).ldy},
+	0xAA: {0xAA, NONE, 2, 2, (*CPU).tax},
+	0xE8: {0xE8, NONE, 2, 2, (*CPU).inx},
+}
 
 type CPU struct {
 	register_a      uint8
@@ -46,44 +74,11 @@ func (c *CPU) run() {
 	for {
 		opcode := c.mem_read(c.program_counter)
 		c.program_counter++
-		switch opcode {
-		case 0xA9:
-			c.lda(IMMEDIATE)
-		case 0xA5:
-			c.lda(ZEROPAGE)
-		case 0xB5:
-			c.lda(ZEROPAGEX)
-		case 0xAD:
-			c.lda(ABSOLUTE)
-		case 0xBD:
-			c.lda(ABSOLUTEX)
-		case 0xB9:
-			c.lda(ABSOLUTEY)
-		case 0xA1:
-			c.lda(INDIRECTX)
-		case 0xB1:
-			c.lda(INDIRECTY)
-		case 0xA2:
-			c.ldx(IMMEDIATE)
-		case 0xA6:
-			c.ldx(ZEROPAGE)
-		case 0xB6:
-			c.ldx(ZEROPAGEY)
-		case 0xAE:
-			c.ldx(ABSOLUTE)
-		case 0xBE:
-			c.ldx(ABSOLUTEY)
-		case 0xA0:
-			c.ldy(IMMEDIATE)
-		case 0xAA:
-			c.tax()
-		case 0xE8:
-			c.inx()
-		case 0x00:
+		if opcode == 0x00 {
 			return
-		default:
-			panic("Not implemented")
 		}
+		op := OPTABLE[opcode]
+		op.f_call(c, op)
 	}
 }
 
@@ -118,7 +113,36 @@ func make_16_bit(hi, lo uint8) uint16 {
 	return (uint16(hi) << 8) | uint16(lo)
 }
 
-func (c *CPU) lda(m AddressingMode) {
+func (c *CPU) lda(op OpCode) {
+
+	c.register_a = c.interpret_mode(op.mode)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) ldy(op OpCode) {
+	c.register_y = c.interpret_mode(op.mode)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_y)
+}
+
+func (c *CPU) ldx(op OpCode) {
+	c.register_x = c.interpret_mode(op.mode)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) tax(op OpCode) {
+	c.register_x = c.register_a
+	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) inx(op OpCode) {
+	c.register_x++
+	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) interpret_mode(m AddressingMode) uint8 {
 	var val uint8
 	next_val := c.mem_read(c.program_counter)
 	switch m {
@@ -128,6 +152,8 @@ func (c *CPU) lda(m AddressingMode) {
 		val = c.mem_read(uint16(next_val))
 	case ZEROPAGEX:
 		val = c.mem_read(uint16(next_val + c.register_x))
+	case ZEROPAGEY:
+		val = c.mem_read(uint16(next_val + c.register_y))
 	case ABSOLUTE:
 		addr := c.mem_read_16(c.program_counter)
 		c.program_counter++
@@ -155,62 +181,7 @@ func (c *CPU) lda(m AddressingMode) {
 	default:
 		panic("Unknown addresing mode")
 	}
-	c.program_counter++
-	c.register_a = val
-	c.set_zero_and_negative_flag(c.register_a)
-}
-
-func (c *CPU) ldx(m AddressingMode) {
-	var val uint8
-	next_val := c.mem_read(c.program_counter)
-	switch m {
-	case IMMEDIATE:
-		val = next_val
-	case ZEROPAGE:
-		val = c.mem_read(uint16(next_val))
-	case ZEROPAGEY:
-		val = c.mem_read(uint16(next_val + c.register_y))
-	case ABSOLUTE:
-		addr := c.mem_read_16(c.program_counter)
-		c.program_counter++
-		val = c.mem_read(addr)
-	case ABSOLUTEY:
-		addr := c.mem_read_16(c.program_counter)
-		c.program_counter++
-		val = c.mem_read(addr + uint16(c.register_y))
-	default:
-		panic("Unknown addresing mode")
-	}
-	c.program_counter++
-	c.register_x = val
-	c.set_zero_and_negative_flag(c.register_x)
-}
-
-func (c *CPU) ldy(m AddressingMode) {
-	var val uint8
-	next_val := c.mem_read(c.program_counter)
-	switch m {
-	case IMMEDIATE:
-		val = next_val
-	case ZEROPAGE:
-		val = c.mem_read(uint16(next_val))
-
-	default:
-		panic("Unknown addresing mode")
-	}
-	c.program_counter++
-	c.register_y = val
-	c.set_zero_and_negative_flag(c.register_y)
-}
-
-func (c *CPU) tax() {
-	c.register_x = c.register_a
-	c.set_zero_and_negative_flag(c.register_x)
-}
-
-func (c *CPU) inx() {
-	c.register_x++
-	c.set_zero_and_negative_flag(c.register_x)
+	return val
 }
 
 func (c *CPU) set_zero_and_negative_flag(v uint8) {
