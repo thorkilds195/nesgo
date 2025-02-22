@@ -231,6 +231,90 @@ func TestLDXImmediateLoadDataWhenBit7Set(t *testing.T) {
 	}
 }
 
+func TestLDXZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA6, 0x10, 0x00}
+	c.mem_write(0x10, 10)
+	c.LoadAndRun(vec)
+	if !(c.register_x == 10) {
+		t.Error(`Register not set to correct value`)
+	}
+	if !((c.status & 0b0000_0010) == 0) {
+		t.Error(`Zero flag set`)
+	}
+	if !((c.status & 0b1000_0000) == 0) {
+		t.Error(`Negative flag set`)
+	}
+}
+
+func TestLDXZeroPageY(t *testing.T) {
+	c := InitCPU()
+	// Sets y register to 0x0F and x to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xa0, 0x0F, 0xB6, 0x80, 0x00}
+	c.mem_write(0x8F, 10)
+	c.LoadAndRun(vec)
+	if !(c.register_x == 10) {
+		t.Error(`Register not set to correct value`)
+	}
+	if !((c.status & 0b0000_0010) == 0) {
+		t.Error(`Zero flag set`)
+	}
+	if !((c.status & 0b1000_0000) == 0) {
+		t.Error(`Negative flag set`)
+	}
+}
+
+func TestLDXZeroPageYLoadDataWhenOverflow(t *testing.T) {
+	c := InitCPU()
+	// Sets y register to 0xFF and x to 0x80
+	// This should fetch from memory location 0x8F due to overflow
+	vec := []uint8{0xA0, 0xFF, 0xB6, 0x80, 0x00}
+	c.mem_write(0x7F, 10)
+	c.LoadAndRun(vec)
+	if !(c.register_x == 10) {
+		t.Error(`Register not set to correct value`)
+	}
+	if !((c.status & 0b0000_0010) == 0) {
+		t.Error(`Zero flag set`)
+	}
+	if !((c.status & 0b1000_0000) == 0) {
+		t.Error(`Negative flag set`)
+	}
+}
+
+func TestLDXAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xAE, 0x05, 0x80, 0x00}
+	c.mem_write(0x8005, 10)
+	c.LoadAndRun(vec)
+	if !(c.register_x == 10) {
+		t.Error(`Register not set to correct value`)
+	}
+	if !((c.status & 0b0000_0010) == 0) {
+		t.Error(`Zero flag set`)
+	}
+	if !((c.status & 0b1000_0000) == 0) {
+		t.Error(`Negative flag set`)
+	}
+}
+
+func TestLDXAbsoluteY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x92, 0xBE, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 10)
+	c.LoadAndRun(vec)
+	if !(c.register_x == 10) {
+		t.Error(`Register not set to correct value`)
+	}
+	if !((c.status & 0b0000_0010) == 0) {
+		t.Error(`Zero flag set`)
+	}
+	if !((c.status & 0b1000_0000) == 0) {
+		t.Error(`Negative flag set`)
+	}
+}
+
 // LDY
 func TestLDYImmediateLoadDataWhenBit7NotSet(t *testing.T) {
 	c := InitCPU()

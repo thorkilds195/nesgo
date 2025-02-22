@@ -65,6 +65,14 @@ func (c *CPU) run() {
 			c.lda(INDIRECTY)
 		case 0xA2:
 			c.ldx(IMMEDIATE)
+		case 0xA6:
+			c.ldx(ZEROPAGE)
+		case 0xB6:
+			c.ldx(ZEROPAGEY)
+		case 0xAE:
+			c.ldx(ABSOLUTE)
+		case 0xBE:
+			c.ldx(ABSOLUTEY)
 		case 0xA0:
 			c.ldy(IMMEDIATE)
 		case 0xAA:
@@ -160,7 +168,16 @@ func (c *CPU) ldx(m AddressingMode) {
 		val = next_val
 	case ZEROPAGE:
 		val = c.mem_read(uint16(next_val))
-
+	case ZEROPAGEY:
+		val = c.mem_read(uint16(next_val + c.register_y))
+	case ABSOLUTE:
+		addr := c.mem_read_16(c.program_counter)
+		c.program_counter++
+		val = c.mem_read(addr)
+	case ABSOLUTEY:
+		addr := c.mem_read_16(c.program_counter)
+		c.program_counter++
+		val = c.mem_read(addr + uint16(c.register_y))
 	default:
 		panic("Unknown addresing mode")
 	}
