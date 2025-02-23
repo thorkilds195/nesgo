@@ -53,6 +53,14 @@ var OPTABLE = map[uint8]OpCode{
 	0x79: {0x79, ABSOLUTEY, 3, 4, (*CPU).adc},
 	0x61: {0x61, INDIRECTX, 3, 4, (*CPU).adc},
 	0x71: {0x71, INDIRECTY, 3, 4, (*CPU).adc},
+	0x29: {0x29, IMMEDIATE, 2, 2, (*CPU).and},
+	0x25: {0x25, ZEROPAGE, 2, 3, (*CPU).and},
+	0x35: {0x35, ZEROPAGEX, 2, 4, (*CPU).and},
+	0x2D: {0x2D, ABSOLUTE, 3, 4, (*CPU).and},
+	0x3D: {0x3D, ABSOLUTEX, 3, 4, (*CPU).and},
+	0x39: {0x39, ABSOLUTEY, 3, 4, (*CPU).and},
+	0x21: {0x21, INDIRECTX, 3, 4, (*CPU).and},
+	0x31: {0x31, INDIRECTY, 3, 4, (*CPU).and},
 }
 
 type CPU struct {
@@ -147,6 +155,12 @@ func (c *CPU) set_overflow_bit(a, b, res uint8) {
 	} else {
 		c.status &= 0b1011_1111
 	}
+}
+
+func (c *CPU) and(op OpCode) {
+	c.register_a &= c.interpret_mode(op.mode)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) adc(op OpCode) {
