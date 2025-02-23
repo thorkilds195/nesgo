@@ -464,6 +464,100 @@ func TestAdcIndirectY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//And
+func TestANDImmediateLoadDataWhenBit7NotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b0000_0001, 0x29, 0b0000_0011, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDImmediateWhen0(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b1100_0001, 0x29, 0b0000_0010, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x00)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestANDImmediateWhenBit7Set(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b1100_0001, 0x29, 0b1000_0011, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b_1000_0001)
+	assert_status(t, c.status, 0b1000_0000)
+}
+
+func TestANDZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0x25, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDZeroPageX(t *testing.T) {
+	c := InitCPU()
+	// Sets x register to 0x0F and A to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xA9, 0b0000_0011, 0xA2, 0x0F, 0x35, 0x80, 0x00}
+	c.mem_write(0x8F, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0x2D, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0xa2, 0x92, 0x3D, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDAbsoluteY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0xA0, 0x92, 0x39, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDIndirectX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0xa2, 0x04, 0x21, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestANDIndirectY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0xa0, 0x04, 0x31, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b1000_0001)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

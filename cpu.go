@@ -14,6 +14,7 @@ const (
 	INDIRECTX
 	INDIRECTY
 	IMPLIED
+	ACCUMULATOR
 )
 
 type OpCode struct {
@@ -61,6 +62,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x39: {0x39, ABSOLUTEY, 3, 4, (*CPU).and},
 	0x21: {0x21, INDIRECTX, 3, 4, (*CPU).and},
 	0x31: {0x31, INDIRECTY, 3, 4, (*CPU).and},
+	//0x0A: {0x0A, ACCUMULATOR, 2, 2, (*CPU).als},
 }
 
 type CPU struct {
@@ -158,6 +160,12 @@ func (c *CPU) set_overflow_bit(a, b, res uint8) {
 }
 
 func (c *CPU) and(op OpCode) {
+	c.register_a &= c.interpret_mode(op.mode)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) asl(op OpCode) {
 	c.register_a &= c.interpret_mode(op.mode)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
