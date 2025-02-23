@@ -13,7 +13,7 @@ const (
 	ABSOLUTEY
 	INDIRECTX
 	INDIRECTY
-	NONE
+	IMPLIED
 )
 
 type OpCode struct {
@@ -26,21 +26,33 @@ type OpCode struct {
 
 var OPTABLE = map[uint8]OpCode{
 	0xA9: {0xA9, IMMEDIATE, 2, 2, (*CPU).lda},
-	0xA5: {0xA5, ZEROPAGE, 2, 2, (*CPU).lda},
-	0xB5: {0xB5, ZEROPAGEX, 2, 2, (*CPU).lda},
-	0xAD: {0xAD, ABSOLUTE, 2, 2, (*CPU).lda},
-	0xBD: {0xBD, ABSOLUTEX, 2, 2, (*CPU).lda},
-	0xB9: {0xB9, ABSOLUTEY, 2, 2, (*CPU).lda},
-	0xA1: {0xA1, INDIRECTX, 2, 2, (*CPU).lda},
-	0xB1: {0xB1, INDIRECTY, 2, 2, (*CPU).lda},
+	0xA5: {0xA5, ZEROPAGE, 2, 3, (*CPU).lda},
+	0xB5: {0xB5, ZEROPAGEX, 2, 4, (*CPU).lda},
+	0xAD: {0xAD, ABSOLUTE, 3, 4, (*CPU).lda},
+	0xBD: {0xBD, ABSOLUTEX, 3, 4, (*CPU).lda}, // plus 1 cycle if page crossed
+	0xB9: {0xB9, ABSOLUTEY, 3, 4, (*CPU).lda}, // plus 1 cycle if page crossed
+	0xA1: {0xA1, INDIRECTX, 2, 6, (*CPU).lda},
+	0xB1: {0xB1, INDIRECTY, 2, 5, (*CPU).lda}, // plus 1 cycle if page crossed
 	0xA2: {0xA2, IMMEDIATE, 2, 2, (*CPU).ldx},
-	0xA6: {0xA6, ZEROPAGE, 2, 2, (*CPU).ldx},
-	0xB6: {0xB6, ZEROPAGEY, 2, 2, (*CPU).ldx},
-	0xAE: {0xAE, ABSOLUTE, 2, 2, (*CPU).ldx},
-	0xBE: {0xBE, ABSOLUTEY, 2, 2, (*CPU).ldx},
-	0xA0: {0xBE, IMMEDIATE, 2, 2, (*CPU).ldy},
-	0xAA: {0xAA, NONE, 2, 2, (*CPU).tax},
-	0xE8: {0xE8, NONE, 2, 2, (*CPU).inx},
+	0xA6: {0xA6, ZEROPAGE, 2, 3, (*CPU).ldx},
+	0xB6: {0xB6, ZEROPAGEY, 2, 4, (*CPU).ldx},
+	0xAE: {0xAE, ABSOLUTE, 3, 4, (*CPU).ldx},
+	0xBE: {0xBE, ABSOLUTEY, 3, 4, (*CPU).ldx}, // plus 1 cycle if page crossed
+	0xA0: {0xA0, IMMEDIATE, 2, 2, (*CPU).ldy},
+	0xA4: {0xA4, ZEROPAGE, 2, 3, (*CPU).ldy},
+	0xB4: {0xB4, ZEROPAGEX, 2, 4, (*CPU).ldy},
+	0xAC: {0xAC, ABSOLUTE, 3, 4, (*CPU).ldy},
+	0xBC: {0xBC, ABSOLUTEX, 3, 4, (*CPU).ldy}, // plus 1 cycle if page crossed
+	0xAA: {0xAA, IMPLIED, 2, 2, (*CPU).tax},
+	0xE8: {0xE8, IMPLIED, 2, 2, (*CPU).inx},
+	0x69: {0x69, IMMEDIATE, 2, 2, (*CPU).adc},
+	0x65: {0x65, ZEROPAGE, 2, 3, (*CPU).adc},
+	0x75: {0x75, ZEROPAGEX, 2, 4, (*CPU).adc},
+	0x6D: {0x6D, ABSOLUTE, 3, 4, (*CPU).adc},
+	0x7D: {0x7D, ABSOLUTEX, 3, 4, (*CPU).adc},
+	0x79: {0x79, ABSOLUTEY, 3, 4, (*CPU).adc},
+	0x61: {0x61, INDIRECTX, 3, 4, (*CPU).adc},
+	0x71: {0x71, INDIRECTY, 3, 4, (*CPU).adc},
 }
 
 type CPU struct {
@@ -57,12 +69,12 @@ func InitCPU() *CPU {
 }
 
 func (c *CPU) LoadAndRun(program []uint8) {
-	c.load(program)
-	c.reset()
-	c.run()
+	c.Load(program)
+	c.Reset()
+	c.Run()
 }
 
-func (c *CPU) reset() {
+func (c *CPU) Reset() {
 	c.register_a = 0
 	c.register_x = 0
 	c.status = 0
@@ -70,7 +82,7 @@ func (c *CPU) reset() {
 	c.program_counter = c.mem_read_16(0xFFFC)
 }
 
-func (c *CPU) run() {
+func (c *CPU) Run() {
 	for {
 		opcode := c.mem_read(c.program_counter)
 		c.program_counter++
@@ -82,7 +94,7 @@ func (c *CPU) run() {
 	}
 }
 
-func (c *CPU) load(program []uint8) {
+func (c *CPU) Load(program []uint8) {
 	copy(c.memory[0x8000:], program)
 
 	c.mem_write_16(0xFFFC, 0x8000)
@@ -111,6 +123,41 @@ func (c *CPU) mem_write_16(addr uint16, v uint16) {
 
 func make_16_bit(hi, lo uint8) uint16 {
 	return (uint16(hi) << 8) | uint16(lo)
+}
+
+func (c *CPU) add_carry_bit(v uint8) uint8 {
+	return (c.status & 0b0000_0001) + v
+}
+
+func (c *CPU) set_carry_bit(new_v, old_v uint8) {
+	if new_v < old_v {
+		c.status |= 0b0000_0001
+	} else {
+		c.status &= 0b1111_1110
+	}
+}
+
+func (c *CPU) set_overflow_bit(a, b, res uint8) {
+	// Extract bit 7 (sign bit) before and after addition
+	valSign := (a & 0x80) != 0
+	regSign := (b & 0x80) != 0
+	resSign := (res & 0x80) != 0
+	if (valSign == regSign) && (valSign != resSign) {
+		c.status |= 0b0100_0000
+	} else {
+		c.status &= 0b1011_1111
+	}
+}
+
+func (c *CPU) adc(op OpCode) {
+	val := c.interpret_mode(op.mode)
+	val = c.add_carry_bit(val)
+	result := val + c.register_a
+	c.set_carry_bit(result, c.register_a)
+	c.set_overflow_bit(val, c.register_a, result)
+	c.register_a = result
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) lda(op OpCode) {
