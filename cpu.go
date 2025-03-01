@@ -68,6 +68,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x0E: {0x0E, ABSOLUTE, 2, 6, (*CPU).asl},
 	0x1E: {0x1E, ABSOLUTEX, 2, 7, (*CPU).asl},
 	0x90: {0x90, RELATIVE, 2, 2, (*CPU).bcc}, // plus 1 if branch succeeds, plus 2 if new page
+	0xB0: {0xB0, RELATIVE, 2, 2, (*CPU).bcs}, // plus 1 if branch succeeds, plus 2 if new page
 }
 
 type CPU struct {
@@ -189,6 +190,15 @@ func (c *CPU) asl(op OpCode) {
 func (c *CPU) bcc(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
 	if c.is_carry_set() {
+		return
+	}
+	c.program_counter++
+	c.program_counter += uint16(int16(int8(rel)))
+}
+
+func (c *CPU) bcs(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
+	if !c.is_carry_set() {
 		return
 	}
 	c.program_counter++

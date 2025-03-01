@@ -624,6 +624,27 @@ func TestBCCWithoutCarryFlag(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//BCS
+func TestBCSWitouthCarryFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xB0, 0xA2, 0x02, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestBSCWithCarryFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xB0, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0x00)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
