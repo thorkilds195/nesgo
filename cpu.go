@@ -62,7 +62,11 @@ var OPTABLE = map[uint8]OpCode{
 	0x39: {0x39, ABSOLUTEY, 3, 4, (*CPU).and},
 	0x21: {0x21, INDIRECTX, 3, 4, (*CPU).and},
 	0x31: {0x31, INDIRECTY, 3, 4, (*CPU).and},
-	//0x0A: {0x0A, ACCUMULATOR, 2, 2, (*CPU).als},
+	0x0A: {0x0A, ACCUMULATOR, 1, 2, (*CPU).asl},
+	0x06: {0x06, ZEROPAGE, 2, 5, (*CPU).asl},
+	0x16: {0x16, ZEROPAGEX, 2, 6, (*CPU).asl},
+	0x0E: {0x0E, ABSOLUTE, 2, 6, (*CPU).asl},
+	0x1E: {0x1E, ABSOLUTEX, 2, 7, (*CPU).asl},
 }
 
 type CPU struct {
@@ -148,7 +152,6 @@ func (c *CPU) set_carry_bit(new_v, old_v uint8) {
 }
 
 func (c *CPU) set_overflow_bit(a, b, res uint8) {
-	// Extract bit 7 (sign bit) before and after addition
 	valSign := (a & 0x80) != 0
 	regSign := (b & 0x80) != 0
 	resSign := (res & 0x80) != 0
@@ -160,19 +163,26 @@ func (c *CPU) set_overflow_bit(a, b, res uint8) {
 }
 
 func (c *CPU) and(op OpCode) {
-	c.register_a &= c.interpret_mode(op.mode)
+	c.register_a &= c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) asl(op OpCode) {
-	c.register_a &= c.interpret_mode(op.mode)
+	if op.mode == ACCUMULATOR {
+		c.register_a <<= 1
+	} else {
+		var addr uint16
+		val := c.interpret_mode(op.mode, &addr)
+		val <<= 1
+		c.mem_write(addr, val)
+	}
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) adc(op OpCode) {
-	val := c.interpret_mode(op.mode)
+	val := c.interpret_mode(op.mode, nil)
 	val = c.add_carry_bit(val)
 	result := val + c.register_a
 	c.set_carry_bit(result, c.register_a)
@@ -184,19 +194,19 @@ func (c *CPU) adc(op OpCode) {
 
 func (c *CPU) lda(op OpCode) {
 
-	c.register_a = c.interpret_mode(op.mode)
+	c.register_a = c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) ldy(op OpCode) {
-	c.register_y = c.interpret_mode(op.mode)
+	c.register_y = c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_y)
 }
 
 func (c *CPU) ldx(op OpCode) {
-	c.register_x = c.interpret_mode(op.mode)
+	c.register_x = c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_x)
 }
@@ -211,30 +221,36 @@ func (c *CPU) inx(op OpCode) {
 	c.set_zero_and_negative_flag(c.register_x)
 }
 
-func (c *CPU) interpret_mode(m AddressingMode) uint8 {
+func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
 	var val uint8
+	var addr uint16
 	next_val := c.mem_read(c.program_counter)
 	switch m {
 	case IMMEDIATE:
 		val = next_val
 	case ZEROPAGE:
-		val = c.mem_read(uint16(next_val))
+		addr = uint16(next_val)
+		val = c.mem_read(addr)
 	case ZEROPAGEX:
-		val = c.mem_read(uint16(next_val + c.register_x))
+		addr = uint16(next_val + c.register_x)
+		val = c.mem_read(addr)
 	case ZEROPAGEY:
-		val = c.mem_read(uint16(next_val + c.register_y))
+		addr = uint16(next_val + c.register_y)
+		val = c.mem_read(addr)
 	case ABSOLUTE:
-		addr := c.mem_read_16(c.program_counter)
+		addr = c.mem_read_16(c.program_counter)
 		c.program_counter++
 		val = c.mem_read(addr)
 	case ABSOLUTEX:
-		addr := c.mem_read_16(c.program_counter)
+		in := c.mem_read_16(c.program_counter)
 		c.program_counter++
-		val = c.mem_read(addr + uint16(c.register_x))
+		addr = in + uint16(c.register_x)
+		val = c.mem_read(addr)
 	case ABSOLUTEY:
-		addr := c.mem_read_16(c.program_counter)
+		in := c.mem_read_16(c.program_counter)
 		c.program_counter++
-		val = c.mem_read(addr + uint16(c.register_y))
+		addr = in + uint16(c.register_y)
+		val = c.mem_read(addr)
 	case INDIRECTX:
 		addr := next_val + c.register_x
 		target := c.mem_read_16(uint16(addr))
@@ -249,6 +265,9 @@ func (c *CPU) interpret_mode(m AddressingMode) uint8 {
 		c.program_counter++
 	default:
 		panic("Unknown addresing mode")
+	}
+	if read_adr != nil {
+		*read_adr = addr
 	}
 	return val
 }

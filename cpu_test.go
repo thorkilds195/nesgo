@@ -558,6 +558,51 @@ func TestANDIndirectY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//Asl
+func TestASLAccumulator(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0x0A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestASLZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x06, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestASLZeroPageX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x16, 0xF8, 0x00}
+	c.mem_write(0xFA, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xFA), 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestASLAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x0E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9005), 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestASLAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x1E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9007, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9007), 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
