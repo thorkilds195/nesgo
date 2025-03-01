@@ -67,6 +67,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x16: {0x16, ZEROPAGEX, 2, 6, (*CPU).asl},
 	0x0E: {0x0E, ABSOLUTE, 2, 6, (*CPU).asl},
 	0x1E: {0x1E, ABSOLUTEX, 2, 7, (*CPU).asl},
+	0x90: {0x90, RELATIVE, 2, 2, (*CPU).bcc}, // plus 1 if branch succeeds, plus 2 if new page
 }
 
 type CPU struct {
@@ -143,6 +144,10 @@ func (c *CPU) add_carry_bit(v uint8) uint8 {
 	return (c.status & 0b0000_0001) + v
 }
 
+func (c *CPU) is_carry_set() bool {
+	return (c.status & 0b0000_0001) > 0
+}
+
 func (c *CPU) set_carry_bit(new_v, old_v uint8) {
 	if new_v < old_v {
 		c.status |= 0b0000_0001
@@ -179,6 +184,15 @@ func (c *CPU) asl(op OpCode) {
 	}
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) bcc(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
+	if c.is_carry_set() {
+		return
+	}
+	c.program_counter++
+	c.program_counter += uint16(int16(int8(rel)))
 }
 
 func (c *CPU) adc(op OpCode) {
@@ -226,7 +240,7 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
 	var addr uint16
 	next_val := c.mem_read(c.program_counter)
 	switch m {
-	case IMMEDIATE:
+	case IMMEDIATE, RELATIVE:
 		val = next_val
 	case ZEROPAGE:
 		addr = uint16(next_val)
