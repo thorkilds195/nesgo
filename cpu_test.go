@@ -806,6 +806,30 @@ func TestBVCWithoutOverflowFlag(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//BVS
+func TestBVSWithoutOverflowFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x70, 0x02, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestBVSWithOverflowFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x70, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0100_0000
+	c.Run()
+	assert_register(t, c.register_a, 0x00)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0100_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

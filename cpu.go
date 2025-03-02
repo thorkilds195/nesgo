@@ -77,6 +77,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x10: {0x10, RELATIVE, 2, 2, (*CPU).bpl}, // plus 1 if branch succeeds, plus 2 if new page
 	0x00: {0x00, IMPLIED, 1, 7, (*CPU).brk},
 	0x50: {0x50, RELATIVE, 2, 2, (*CPU).bvc}, // plus 1 if branch succeeds, plus 2 if new page
+	0x70: {0x70, RELATIVE, 2, 2, (*CPU).bvs}, // plus 1 if branch succeeds, plus 2 if new page
 }
 
 type CPU struct {
@@ -210,6 +211,15 @@ func (c *CPU) bmi(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	if c.is_negative_set() {
+		return
+	}
+	c.program_counter += uint16(int16(int8(rel)))
+}
+
+func (c *CPU) bvs(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	if !c.is_overflow_set() {
 		return
 	}
 	c.program_counter += uint16(int16(int8(rel)))
