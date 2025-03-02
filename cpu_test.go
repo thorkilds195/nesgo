@@ -346,6 +346,35 @@ func TestInxWhenBit7Set(t *testing.T) {
 	assert_status(t, c.status, 0b1000_0000)
 }
 
+// INY
+func TestInyAdd1(t *testing.T) {
+	c := InitCPU()
+	c.LoadAndRun([]uint8{0xC8, 0x00})
+	assert_register(t, c.register_y, 1)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestInyOverflowTo0(t *testing.T) {
+	c := InitCPU()
+	c.LoadAndRun([]uint8{0xa0, 0xff, 0xAA, 0xC8, 0x00})
+	assert_register(t, c.register_y, 0)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestInyOverflow(t *testing.T) {
+	c := InitCPU()
+	c.LoadAndRun([]uint8{0xa0, 0xff, 0xAA, 0xC8, 0xC8, 0x00})
+	assert_register(t, c.register_y, 1)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestInyWhenBit7Set(t *testing.T) {
+	c := InitCPU()
+	c.LoadAndRun([]uint8{0xa0, 200, 0xAA, 0xC8, 0x00})
+	assert_register(t, c.register_y, 201)
+	assert_status(t, c.status, 0b1000_0000)
+}
+
 // ADC
 func TestAdcImmediateWithoutCarry(t *testing.T) {
 	c := InitCPU()

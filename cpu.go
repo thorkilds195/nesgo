@@ -116,6 +116,7 @@ var OPTABLE = map[uint8]OpCode{
 	0xF6: {0xF6, ZEROPAGEX, 2, 2, (*CPU).inc},
 	0xEE: {0xEE, ABSOLUTE, 2, 2, (*CPU).inc},
 	0xFE: {0xFE, ABSOLUTEX, 2, 2, (*CPU).inc},
+	0xC8: {0xC8, IMPLIED, 2, 2, (*CPU).iny},
 }
 
 type CPU struct {
@@ -451,6 +452,11 @@ func (c *CPU) tax(op OpCode) {
 func (c *CPU) inx(op OpCode) {
 	c.register_x++
 	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) iny(op OpCode) {
+	c.register_y++
+	c.set_zero_and_negative_flag(c.register_y)
 }
 
 func (c *CPU) dec(op OpCode) {
