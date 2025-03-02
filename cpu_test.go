@@ -1116,6 +1116,76 @@ func TestCMPIndirectYWhen7BitSet(t *testing.T) {
 	assert_status(t, c.status, 0b1000_0011)
 }
 
+//CPX
+func TestCPXImmediateWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x09, 0xE0, 0x05, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCPXImmediateWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x09, 0xE0, 0x09, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCPXImmediateWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0xFF, 0xE0, 0xFF, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCPXZeroPageWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x09, 0xE4, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCPXZeroPageWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x09, 0xE4, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCPXZeroPageWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0xFF, 0xE4, 0xF8, 0x00}
+	c.mem_write(0xF8, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCPXAbsoluteWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x09, 0xEC, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCPXAbsoluteWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x09, 0xEC, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCPXAbsoluteWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0xFF, 0xEC, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

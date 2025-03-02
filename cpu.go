@@ -92,6 +92,9 @@ var OPTABLE = map[uint8]OpCode{
 	0xD9: {0xD9, ABSOLUTEY, 2, 2, (*CPU).cmp},
 	0xC1: {0xC1, INDIRECTX, 2, 2, (*CPU).cmp},
 	0xD1: {0xD1, INDIRECTY, 2, 2, (*CPU).cmp},
+	0xE0: {0xE0, IMMEDIATE, 2, 2, (*CPU).cpx},
+	0xE4: {0xE4, ZEROPAGE, 2, 2, (*CPU).cpx},
+	0xEC: {0xEC, ABSOLUTE, 2, 2, (*CPU).cpx},
 }
 
 type CPU struct {
@@ -236,20 +239,30 @@ func (c *CPU) copy_overflow_flag(v uint8) {
 	c.status |= v & 0b0100_0000
 }
 
-func (c *CPU) cmp(op OpCode) {
-	val := c.interpret_mode(op.mode, nil)
-	c.program_counter++
-	if c.register_a >= val {
+func (c *CPU) do_compare(val, reg uint8) {
+	if reg >= val {
 		c.set_carry_bit()
 	} else {
 		c.clear_carry_bit()
 	}
-	if val == c.register_a {
+	if val == reg {
 		c.set_zero_flag(0)
 	} else {
 		c.set_zero_flag(1)
 	}
-	c.set_negative_flag(c.register_a & val)
+	c.set_negative_flag(reg & val)
+}
+
+func (c *CPU) cmp(op OpCode) {
+	val := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	c.do_compare(val, c.register_a)
+}
+
+func (c *CPU) cpx(op OpCode) {
+	val := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	c.do_compare(val, c.register_x)
 }
 
 func (c *CPU) clv(op OpCode) {
