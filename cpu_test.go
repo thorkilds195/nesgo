@@ -914,6 +914,208 @@ func TestCLVWhenSetTo0(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//CMP
+func TestCMPImmediateWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x09, 0xC9, 0x05, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPImmediateWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x09, 0xC9, 0x09, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPImmediateWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0xFF, 0xC9, 0xFF, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPZeroPageWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x09, 0xC5, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPZeroPageWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x09, 0xC5, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPZeroPageWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0xFF, 0xC5, 0xF8, 0x00}
+	c.mem_write(0xF8, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPZeroPageXWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xD5, 0xF8, 0x00}
+	c.mem_write(0xF9, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPZeroPageXWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xD5, 0xF8, 0x00}
+	c.mem_write(0xF9, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPZeroPageXWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x01, 0xA9, 0xFF, 0xD5, 0xF8, 0x00}
+	c.mem_write(0xF9, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPAbsoluteWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x09, 0xCD, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPAbsoluteWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x09, 0xCD, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPAbsoluteWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0xFF, 0xCD, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPAbsoluteXWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xDD, 0x50, 0x80, 0x00}
+	c.mem_write(0x8051, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPAbsoluteXWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xDD, 0x50, 0x80, 0x00}
+	c.mem_write(0x8051, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPAbsoluteXWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x01, 0xA9, 0xFF, 0xDD, 0x50, 0x80, 0x00}
+	c.mem_write(0x8051, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPAbsoluteYWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x01, 0xA9, 0x09, 0xD9, 0x50, 0x80, 0x00}
+	c.mem_write(0x8051, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPAbsoluteYWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x01, 0xA9, 0x09, 0xD9, 0x50, 0x80, 0x00}
+	c.mem_write(0x8051, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPAbsoluteYWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x01, 0xA9, 0xFF, 0xD9, 0x50, 0x80, 0x00}
+	c.mem_write(0x8051, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPIndirectXWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x04, 0xA9, 0x09, 0xC1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPIndirectXWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x04, 0xA9, 0x09, 0xC1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPIndirectXWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x04, 0xA9, 0xFF, 0xC1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCMPIndirectYWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x04, 0xA9, 0x09, 0xD1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCMPIndirectYWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x04, 0xA9, 0x09, 0xD1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCMPIndirectYWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x04, 0xA9, 0xFF, 0xD1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

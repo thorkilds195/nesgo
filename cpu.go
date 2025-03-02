@@ -1,5 +1,7 @@
 package cpu
 
+import "fmt"
+
 type AddressingMode uint8
 
 const (
@@ -82,6 +84,14 @@ var OPTABLE = map[uint8]OpCode{
 	0xD8: {0xD8, IMPLIED, 1, 2, (*CPU).cld},
 	0x58: {0x58, IMPLIED, 1, 2, (*CPU).cli},
 	0xB8: {0xB8, IMPLIED, 1, 2, (*CPU).clv},
+	0xC9: {0xC9, IMMEDIATE, 2, 2, (*CPU).cmp},
+	0xC5: {0xC5, ZEROPAGE, 2, 2, (*CPU).cmp},
+	0xD5: {0xD5, ZEROPAGEX, 2, 2, (*CPU).cmp},
+	0xCD: {0xCD, ABSOLUTE, 2, 2, (*CPU).cmp},
+	0xDD: {0xDD, ABSOLUTEX, 2, 2, (*CPU).cmp},
+	0xD9: {0xD9, ABSOLUTEY, 2, 2, (*CPU).cmp},
+	0xC1: {0xC1, INDIRECTX, 2, 2, (*CPU).cmp},
+	0xD1: {0xD1, INDIRECTY, 2, 2, (*CPU).cmp},
 }
 
 type CPU struct {
@@ -112,10 +122,14 @@ func (c *CPU) Reset() {
 }
 
 func (c *CPU) Run() {
+	var op OpCode
+	var ok bool
 	for {
 		opcode := c.mem_read(c.program_counter)
 		c.program_counter++
-		op := OPTABLE[opcode]
+		if op, ok = OPTABLE[opcode]; !ok {
+			panic(fmt.Sprintf("No instr found for %x", opcode))
+		}
 		op.f_call(c, op)
 		if opcode == 0x00 {
 			return
@@ -179,12 +193,16 @@ func (c *CPU) is_overflow_set() bool {
 	return (c.status & 0b0100_0000) > 0
 }
 
-func (c *CPU) set_carry_bit(new_v, old_v uint8) {
+func (c *CPU) decide_carry_bit(new_v, old_v uint8) {
 	if new_v < old_v {
-		c.status |= 0b0000_0001
+		c.set_carry_bit()
 	} else {
 		c.clear_carry_bit()
 	}
+}
+
+func (c *CPU) set_carry_bit() {
+	c.status |= 0b0000_0001
 }
 
 func (c *CPU) clear_carry_bit() {
@@ -216,6 +234,22 @@ func (c *CPU) compute_overflow_bit(a, b, res uint8) {
 
 func (c *CPU) copy_overflow_flag(v uint8) {
 	c.status |= v & 0b0100_0000
+}
+
+func (c *CPU) cmp(op OpCode) {
+	val := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	if c.register_a >= val {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	if val == c.register_a {
+		c.set_zero_flag(0)
+	} else {
+		c.set_zero_flag(1)
+	}
+	c.set_negative_flag(c.register_a & val)
 }
 
 func (c *CPU) clv(op OpCode) {
@@ -337,7 +371,7 @@ func (c *CPU) adc(op OpCode) {
 	val := c.interpret_mode(op.mode, nil)
 	val = c.add_carry_bit(val)
 	result := val + c.register_a
-	c.set_carry_bit(result, c.register_a)
+	c.decide_carry_bit(result, c.register_a)
 	c.compute_overflow_bit(val, c.register_a, result)
 	c.register_a = result
 	c.program_counter++
