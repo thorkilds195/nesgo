@@ -78,6 +78,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x00: {0x00, IMPLIED, 1, 7, (*CPU).brk},
 	0x50: {0x50, RELATIVE, 2, 2, (*CPU).bvc}, // plus 1 if branch succeeds, plus 2 if new page
 	0x70: {0x70, RELATIVE, 2, 2, (*CPU).bvs}, // plus 1 if branch succeeds, plus 2 if new page
+	0x18: {0x18, IMPLIED, 1, 2, (*CPU).clc},
 }
 
 type CPU struct {
@@ -179,8 +180,12 @@ func (c *CPU) set_carry_bit(new_v, old_v uint8) {
 	if new_v < old_v {
 		c.status |= 0b0000_0001
 	} else {
-		c.status &= 0b1111_1110
+		c.clear_carry_bit()
 	}
+}
+
+func (c *CPU) clear_carry_bit() {
+	c.status &= 0b1111_1110
 }
 
 func (c *CPU) compute_overflow_bit(a, b, res uint8) {
@@ -196,6 +201,10 @@ func (c *CPU) compute_overflow_bit(a, b, res uint8) {
 
 func (c *CPU) copy_overflow_flag(v uint8) {
 	c.status |= v & 0b0100_0000
+}
+
+func (c *CPU) clc(op OpCode) {
+	c.clear_carry_bit()
 }
 
 func (c *CPU) bne(op OpCode) {
