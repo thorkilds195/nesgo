@@ -893,6 +893,27 @@ func TestCLIWhenSetTo0(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//CLV
+func TestCLVWhenSetTo1(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xB8, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0100_0000
+	c.Run()
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestCLVWhenSetTo0(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xB8, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
