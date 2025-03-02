@@ -70,6 +70,9 @@ var OPTABLE = map[uint8]OpCode{
 	0x90: {0x90, RELATIVE, 2, 2, (*CPU).bcc}, // plus 1 if branch succeeds, plus 2 if new page
 	0xB0: {0xB0, RELATIVE, 2, 2, (*CPU).bcs}, // plus 1 if branch succeeds, plus 2 if new page
 	0xF0: {0xF0, RELATIVE, 2, 2, (*CPU).beq}, // plus 1 if branch succeeds, plus 2 if new page
+	0x24: {0x24, ZEROPAGE, 2, 3, (*CPU).bit},
+	0x2C: {0x2C, ABSOLUTE, 2, 3, (*CPU).bit},
+	0x30: {0x30, RELATIVE, 2, 2, (*CPU).bmi}, // plus 1 if branch succeeds, plus 2 if new page
 }
 
 type CPU struct {
@@ -154,6 +157,10 @@ func (c *CPU) is_zero_set() bool {
 	return (c.status & 0b0000_0010) > 0
 }
 
+func (c *CPU) is_negative_set() bool {
+	return (c.status & 0b1000_0000) > 0
+}
+
 func (c *CPU) set_carry_bit(new_v, old_v uint8) {
 	if new_v < old_v {
 		c.status |= 0b0000_0001
@@ -162,15 +169,36 @@ func (c *CPU) set_carry_bit(new_v, old_v uint8) {
 	}
 }
 
-func (c *CPU) set_overflow_bit(a, b, res uint8) {
-	valSign := (a & 0x80) != 0
-	regSign := (b & 0x80) != 0
-	resSign := (res & 0x80) != 0
-	if (valSign == regSign) && (valSign != resSign) {
+func (c *CPU) compute_overflow_bit(a, b, res uint8) {
+	val_sign := (a & 0x80) != 0
+	reg_sign := (b & 0x80) != 0
+	res_sign := (res & 0x80) != 0
+	if (val_sign == reg_sign) && (val_sign != res_sign) {
 		c.status |= 0b0100_0000
 	} else {
 		c.status &= 0b1011_1111
 	}
+}
+
+func (c *CPU) copy_overflow_flag(v uint8) {
+	c.status |= v & 0b0100_0000
+}
+
+func (c *CPU) bmi(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
+	if c.is_negative_set() {
+		return
+	}
+	c.program_counter++
+	c.program_counter += uint16(int16(int8(rel)))
+}
+
+func (c *CPU) bit(op OpCode) {
+	val := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	c.set_zero_flag(val & c.register_a)
+	c.copy_overflow_flag(val)
+	c.set_negative_flag(val)
 }
 
 func (c *CPU) and(op OpCode) {
@@ -224,7 +252,7 @@ func (c *CPU) adc(op OpCode) {
 	val = c.add_carry_bit(val)
 	result := val + c.register_a
 	c.set_carry_bit(result, c.register_a)
-	c.set_overflow_bit(val, c.register_a, result)
+	c.compute_overflow_bit(val, c.register_a, result)
 	c.register_a = result
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
@@ -311,16 +339,23 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
 }
 
 func (c *CPU) set_zero_and_negative_flag(v uint8) {
-	// Set zero flag if v is 0 else unset 0 flag
-	if v == 0 {
-		c.status |= 0b0000_0010
-	} else {
-		c.status &= 0b1111_1101
-	}
+	c.set_zero_flag(v)
+	c.set_negative_flag(v)
+}
+func (c *CPU) set_negative_flag(v uint8) {
 	// Set negative flag if bit 7 of v is set
 	if (v & 0b1000_0000) > 0 {
 		c.status |= 0b1000_0000
 	} else {
 		c.status &= 0b0111_1111
+	}
+}
+
+func (c *CPU) set_zero_flag(v uint8) {
+	// Set zero flag if v is 0 else unset 0 flag
+	if v == 0 {
+		c.status |= 0b0000_0010
+	} else {
+		c.status &= 0b1111_1101
 	}
 }

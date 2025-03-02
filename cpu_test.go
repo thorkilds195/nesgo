@@ -681,6 +681,68 @@ func TestBEQWithCarryFlag(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0001)
 }
 
+//BIT
+func TestBITZeroPageAllStatusZero(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0010, 0x24, 0x10, 0x00}
+	c.mem_write(0x10, 0b0000_0010)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestBITZeroPageZeroFlagSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0010, 0x24, 0x10, 0x00}
+	c.mem_write(0x10, 0b0000_0000)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestBITZeroPageOverflowSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x24, 0x10, 0x00}
+	c.mem_write(0x10, 0b0100_0000)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0100_0010)
+}
+
+func TestBITZeroPageNegativeSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x24, 0x10, 0x00}
+	c.mem_write(0x10, 0b1000_0000)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0010)
+}
+
+func TestBITAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0010, 0x2C, 0x10, 0x80, 0x00}
+	c.mem_write(0x8010, 0b0000_0010)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//BMI
+func TestBMIWithNegativeFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x30, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b1000_0000
+	c.Run()
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestBMIWithoutNegativeFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x30, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x00)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
