@@ -74,6 +74,9 @@ var OPTABLE = map[uint8]OpCode{
 	0x2C: {0x2C, ABSOLUTE, 2, 3, (*CPU).bit},
 	0x30: {0x30, RELATIVE, 2, 2, (*CPU).bmi}, // plus 1 if branch succeeds, plus 2 if new page
 	0xD0: {0xD0, RELATIVE, 2, 2, (*CPU).bne}, // plus 1 if branch succeeds, plus 2 if new page
+	0x10: {0x10, RELATIVE, 2, 2, (*CPU).bpl}, // plus 1 if branch succeeds, plus 2 if new page
+	0x00: {0x00, IMPLIED, 1, 7, (*CPU).brk},
+	0x50: {0x50, RELATIVE, 2, 2, (*CPU).bvc}, // plus 1 if branch succeeds, plus 2 if new page
 }
 
 type CPU struct {
@@ -107,11 +110,11 @@ func (c *CPU) Run() {
 	for {
 		opcode := c.mem_read(c.program_counter)
 		c.program_counter++
+		op := OPTABLE[opcode]
+		op.f_call(c, op)
 		if opcode == 0x00 {
 			return
 		}
-		op := OPTABLE[opcode]
-		op.f_call(c, op)
 	}
 }
 
@@ -119,6 +122,11 @@ func (c *CPU) Load(program []uint8) {
 	copy(c.memory[0x8000:], program)
 
 	c.mem_write_16(0xFFFC, 0x8000)
+}
+
+func (c *CPU) brk(op OpCode) {
+	// TODO: Implement this in full
+	c.program_counter++
 }
 
 func (c *CPU) mem_read(addr uint16) uint8 {
@@ -162,6 +170,10 @@ func (c *CPU) is_negative_set() bool {
 	return (c.status & 0b1000_0000) > 0
 }
 
+func (c *CPU) is_overflow_set() bool {
+	return (c.status & 0b0100_0000) > 0
+}
+
 func (c *CPU) set_carry_bit(new_v, old_v uint8) {
 	if new_v < old_v {
 		c.status |= 0b0000_0001
@@ -187,19 +199,37 @@ func (c *CPU) copy_overflow_flag(v uint8) {
 
 func (c *CPU) bne(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
 	if !c.is_zero_set() {
 		return
 	}
-	c.program_counter++
 	c.program_counter += uint16(int16(int8(rel)))
 }
 
 func (c *CPU) bmi(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
 	if c.is_negative_set() {
 		return
 	}
+	c.program_counter += uint16(int16(int8(rel)))
+}
+
+func (c *CPU) bpl(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
 	c.program_counter++
+	if !c.is_negative_set() {
+		return
+	}
+	c.program_counter += uint16(int16(int8(rel)))
+}
+
+func (c *CPU) bvc(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	if c.is_overflow_set() {
+		return
+	}
 	c.program_counter += uint16(int16(int8(rel)))
 }
 
@@ -232,28 +262,28 @@ func (c *CPU) asl(op OpCode) {
 
 func (c *CPU) bcc(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
 	if c.is_carry_set() {
 		return
 	}
-	c.program_counter++
 	c.program_counter += uint16(int16(int8(rel)))
 }
 
 func (c *CPU) bcs(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
 	if !c.is_carry_set() {
 		return
 	}
-	c.program_counter++
 	c.program_counter += uint16(int16(int8(rel)))
 }
 
 func (c *CPU) beq(op OpCode) {
 	rel := c.interpret_mode(op.mode, nil)
+	c.program_counter++
 	if !c.is_zero_set() {
 		return
 	}
-	c.program_counter++
 	c.program_counter += uint16(int16(int8(rel)))
 }
 

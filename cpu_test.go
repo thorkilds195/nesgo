@@ -606,7 +606,7 @@ func TestASLAbsoluteX(t *testing.T) {
 //BCC
 func TestBCCWithCarryFlag(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0x90, 0xA2, 0x02, 0x00}
+	vec := []uint8{0x90, 0x02, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
@@ -627,7 +627,7 @@ func TestBCCWithoutCarryFlag(t *testing.T) {
 //BCS
 func TestBCSWitouthCarryFlag(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xB0, 0xA2, 0x02, 0x00}
+	vec := []uint8{0xB0, 0x02, 0xA2, 0x02, 0x00}
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 0x02)
 	assert_status(t, c.status, 0b0000_0000)
@@ -648,7 +648,7 @@ func TestBSCWithCarryFlag(t *testing.T) {
 //BEQ
 func TestBEQWithoutZeroFlag(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xF0, 0xA2, 0x02, 0x00}
+	vec := []uint8{0xF0, 0x02, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0000
@@ -725,7 +725,7 @@ func TestBITAbsolute(t *testing.T) {
 //BMI
 func TestBMIWithNegativeFlag(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0x30, 0xA2, 0x02, 0x00}
+	vec := []uint8{0x30, 0x02, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b1000_0000
@@ -746,7 +746,7 @@ func TestBMIWithoutNegativeFlag(t *testing.T) {
 //BNE
 func TestBNEWithoutZeroFlag(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xD0, 0xA2, 0x02, 0x00}
+	vec := []uint8{0xD0, 0x02, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0000
@@ -758,6 +758,48 @@ func TestBNEWithoutZeroFlag(t *testing.T) {
 func TestBNEWithZeroFlag(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x00, 0xD0, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x00)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//BPL
+func TestBPLWithoutNegativeFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x10, 0x02, 0xA2, 0x02, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestBPLWithNegativeFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x10, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b1000_0000
+	c.Run()
+	assert_register(t, c.register_a, 0x00)
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//BVC
+func TestBVCWithOverflowFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x50, 0x02, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0100_0000
+	c.Run()
+	assert_register(t, c.register_x, 0x02)
+	assert_status(t, c.status, 0b0100_0000)
+}
+
+func TestBVCWithoutOverflowFlag(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x50, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0x00)
 	assert_register(t, c.register_x, 0x02)
