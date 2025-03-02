@@ -80,6 +80,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x70: {0x70, RELATIVE, 2, 2, (*CPU).bvs}, // plus 1 if branch succeeds, plus 2 if new page
 	0x18: {0x18, IMPLIED, 1, 2, (*CPU).clc},
 	0xD8: {0xD8, IMPLIED, 1, 2, (*CPU).cld},
+	0x58: {0x58, IMPLIED, 1, 2, (*CPU).cli},
 }
 
 type CPU struct {
@@ -193,6 +194,10 @@ func (c *CPU) clear_decimal_bit() {
 	c.status &= 0b1111_0111
 }
 
+func (c *CPU) clear_interrupt_bit() {
+	c.status &= 0b1111_1011
+}
+
 func (c *CPU) compute_overflow_bit(a, b, res uint8) {
 	val_sign := (a & 0x80) != 0
 	reg_sign := (b & 0x80) != 0
@@ -214,6 +219,10 @@ func (c *CPU) cld(op OpCode) {
 
 func (c *CPU) clc(op OpCode) {
 	c.clear_carry_bit()
+}
+
+func (c *CPU) cli(op OpCode) {
+	c.clear_interrupt_bit()
 }
 
 func (c *CPU) bne(op OpCode) {
