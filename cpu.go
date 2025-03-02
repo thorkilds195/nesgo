@@ -73,6 +73,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x24: {0x24, ZEROPAGE, 2, 3, (*CPU).bit},
 	0x2C: {0x2C, ABSOLUTE, 2, 3, (*CPU).bit},
 	0x30: {0x30, RELATIVE, 2, 2, (*CPU).bmi}, // plus 1 if branch succeeds, plus 2 if new page
+	0xD0: {0xD0, RELATIVE, 2, 2, (*CPU).bne}, // plus 1 if branch succeeds, plus 2 if new page
 }
 
 type CPU struct {
@@ -182,6 +183,15 @@ func (c *CPU) compute_overflow_bit(a, b, res uint8) {
 
 func (c *CPU) copy_overflow_flag(v uint8) {
 	c.status |= v & 0b0100_0000
+}
+
+func (c *CPU) bne(op OpCode) {
+	rel := c.interpret_mode(op.mode, nil)
+	if !c.is_zero_set() {
+		return
+	}
+	c.program_counter++
+	c.program_counter += uint16(int16(int8(rel)))
 }
 
 func (c *CPU) bmi(op OpCode) {
