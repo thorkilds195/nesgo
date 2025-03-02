@@ -1186,6 +1186,131 @@ func TestCPXAbsoluteWhen7BitSet(t *testing.T) {
 	assert_status(t, c.status, 0b1000_0011)
 }
 
+//CPY
+func TestCPYImmediateWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x09, 0xC0, 0x05, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCPYImmediateWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x09, 0xC0, 0x09, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCPYImmediateWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0xFF, 0xC0, 0xFF, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCPYZeroPageWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x09, 0xC4, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCPYZeroPageWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x09, 0xC4, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCPYZeroPageWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0xFF, 0xC4, 0xF8, 0x00}
+	c.mem_write(0xF8, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+func TestCPYAbsoluteWhenAGreaterThanM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x09, 0xCC, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0x05)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestCPYAbsoluteWhenAEqualM(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x09, 0xCC, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0x09)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestCPYAbsoluteWhen7BitSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0xFF, 0xCC, 0x50, 0x80, 0x00}
+	c.mem_write(0x8050, 0xFF)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b1000_0011)
+}
+
+//DEC
+func TestDECZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xC6, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0x01)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestDECZeroPageX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x01, 0xD6, 0xF8, 0x00}
+	c.mem_write(0xF9, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF9), 0x01)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestDECZeroAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xCE, 0x05, 0x80, 0x00}
+	c.mem_write(0x8005, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8005), 0x01)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestDECZeroAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x01, 0xDE, 0x05, 0x80, 0x00}
+	c.mem_write(0x8006, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8006), 0x01)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//DEX
+func TestDEX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0xCA, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_x, 0x01)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//DEY
+func TestDEY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA0, 0x02, 0x88, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_y, 0x01)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

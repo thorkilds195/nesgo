@@ -95,6 +95,15 @@ var OPTABLE = map[uint8]OpCode{
 	0xE0: {0xE0, IMMEDIATE, 2, 2, (*CPU).cpx},
 	0xE4: {0xE4, ZEROPAGE, 2, 2, (*CPU).cpx},
 	0xEC: {0xEC, ABSOLUTE, 2, 2, (*CPU).cpx},
+	0xC0: {0xC0, IMMEDIATE, 2, 2, (*CPU).cpy},
+	0xC4: {0xC4, ZEROPAGE, 2, 2, (*CPU).cpy},
+	0xCC: {0xCC, ABSOLUTE, 2, 2, (*CPU).cpy},
+	0xC6: {0xC6, ZEROPAGE, 2, 2, (*CPU).dec},
+	0xD6: {0xD6, ZEROPAGEX, 2, 2, (*CPU).dec},
+	0xCE: {0xCE, ABSOLUTE, 2, 2, (*CPU).dec},
+	0xDE: {0xDE, ABSOLUTEX, 2, 2, (*CPU).dec},
+	0xCA: {0xCA, IMPLIED, 2, 2, (*CPU).dex},
+	0x88: {0x88, IMPLIED, 2, 2, (*CPU).dey},
 }
 
 type CPU struct {
@@ -265,6 +274,12 @@ func (c *CPU) cpx(op OpCode) {
 	c.do_compare(val, c.register_x)
 }
 
+func (c *CPU) cpy(op OpCode) {
+	val := c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	c.do_compare(val, c.register_y)
+}
+
 func (c *CPU) clv(op OpCode) {
 	c.clear_overflow_bit()
 }
@@ -418,6 +433,25 @@ func (c *CPU) tax(op OpCode) {
 func (c *CPU) inx(op OpCode) {
 	c.register_x++
 	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) dec(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr)
+	c.program_counter++
+	val--
+	c.mem_write(addr, val)
+	c.set_zero_and_negative_flag(val)
+}
+
+func (c *CPU) dex(op OpCode) {
+	c.register_x--
+	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) dey(op OpCode) {
+	c.register_y--
+	c.set_zero_and_negative_flag(c.register_y)
 }
 
 func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
