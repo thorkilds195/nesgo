@@ -104,6 +104,18 @@ var OPTABLE = map[uint8]OpCode{
 	0xDE: {0xDE, ABSOLUTEX, 2, 2, (*CPU).dec},
 	0xCA: {0xCA, IMPLIED, 2, 2, (*CPU).dex},
 	0x88: {0x88, IMPLIED, 2, 2, (*CPU).dey},
+	0x49: {0x49, IMMEDIATE, 2, 2, (*CPU).eor},
+	0x45: {0x45, ZEROPAGE, 2, 2, (*CPU).eor},
+	0x55: {0x55, ZEROPAGEX, 2, 2, (*CPU).eor},
+	0x4D: {0x4D, ABSOLUTE, 2, 2, (*CPU).eor},
+	0x5D: {0x5D, ABSOLUTEX, 2, 2, (*CPU).eor},
+	0x59: {0x59, ABSOLUTEY, 2, 2, (*CPU).eor},
+	0x41: {0x41, INDIRECTX, 2, 2, (*CPU).eor},
+	0x51: {0x51, INDIRECTY, 2, 2, (*CPU).eor},
+	0xE6: {0xE6, ZEROPAGE, 2, 2, (*CPU).inc},
+	0xF6: {0xF6, ZEROPAGEX, 2, 2, (*CPU).inc},
+	0xEE: {0xEE, ABSOLUTE, 2, 2, (*CPU).inc},
+	0xFE: {0xFE, ABSOLUTEX, 2, 2, (*CPU).inc},
 }
 
 type CPU struct {
@@ -355,6 +367,12 @@ func (c *CPU) and(op OpCode) {
 	c.set_zero_and_negative_flag(c.register_a)
 }
 
+func (c *CPU) eor(op OpCode) {
+	c.register_a ^= c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_a)
+}
+
 func (c *CPU) asl(op OpCode) {
 	if op.mode == ACCUMULATOR {
 		c.register_a <<= 1
@@ -440,6 +458,15 @@ func (c *CPU) dec(op OpCode) {
 	val := c.interpret_mode(op.mode, &addr)
 	c.program_counter++
 	val--
+	c.mem_write(addr, val)
+	c.set_zero_and_negative_flag(val)
+}
+
+func (c *CPU) inc(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr)
+	c.program_counter++
+	val++
 	c.mem_write(addr, val)
 	c.set_zero_and_negative_flag(val)
 }

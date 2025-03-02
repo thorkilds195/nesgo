@@ -1311,6 +1311,137 @@ func TestDEY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+//EOR
+func TestEORImmediateLoadDataWhenBit7NotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b0000_0101, 0x49, 0b0000_0011, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORImmediateWhen0(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b0000_0001, 0x49, 0b0000_0001, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x00)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestEORImmediateWhenBit7Set(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b1100_0001, 0x49, 0b0100_0000, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b_1000_0001)
+	assert_status(t, c.status, 0b1000_0000)
+}
+
+func TestEORZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x45, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORZeroPageX(t *testing.T) {
+	c := InitCPU()
+	// Sets x register to 0x0F and A to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xA9, 0b0000_0101, 0xA2, 0x0F, 0x55, 0x80, 0x00}
+	c.mem_write(0x8F, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x4D, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x92, 0x5D, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORAbsoluteY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x92, 0x59, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORIndirectX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0x41, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestEORIndirectY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0x51, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//INC
+func TestINCZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xE6, 0xF8, 0x00}
+	c.mem_write(0xF8, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0x03)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestINCZeroPageX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x01, 0xF6, 0xF8, 0x00}
+	c.mem_write(0xF9, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF9), 0x03)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestINCAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xEE, 0x05, 0x80, 0x00}
+	c.mem_write(0x8005, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8005), 0x03)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestINCAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x01, 0xFE, 0x05, 0x80, 0x00}
+	c.mem_write(0x8006, 0x02)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8006), 0x03)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
