@@ -165,6 +165,9 @@ var OPTABLE = map[uint8]OpCode{
 	0x86: {0x86, ZEROPAGE, 2, 2, (*CPU).stx},
 	0x96: {0x96, ZEROPAGEY, 2, 2, (*CPU).stx},
 	0x8E: {0x8E, ABSOLUTE, 2, 2, (*CPU).stx},
+	0x84: {0x84, ZEROPAGE, 2, 2, (*CPU).sty},
+	0x94: {0x94, ZEROPAGEX, 2, 2, (*CPU).sty},
+	0x8C: {0x8C, ABSOLUTE, 2, 2, (*CPU).sty},
 }
 
 type CPU struct {
@@ -358,6 +361,13 @@ func (c *CPU) sta(op OpCode) {
 }
 
 func (c *CPU) stx(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr)
+	c.program_counter++
+	c.mem_write(addr, c.register_x)
+}
+
+func (c *CPU) sty(op OpCode) {
 	var addr uint16
 	c.interpret_mode(op.mode, &addr)
 	c.program_counter++
