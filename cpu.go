@@ -163,7 +163,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x81: {0x81, INDIRECTX, 2, 2, (*CPU).sta},
 	0x91: {0x91, INDIRECTY, 2, 2, (*CPU).sta},
 	0x86: {0x86, ZEROPAGE, 2, 2, (*CPU).stx},
-	0x96: {0x96, ZEROPAGEX, 2, 2, (*CPU).stx},
+	0x96: {0x96, ZEROPAGEY, 2, 2, (*CPU).stx},
 	0x8E: {0x8E, ABSOLUTE, 2, 2, (*CPU).stx},
 }
 
