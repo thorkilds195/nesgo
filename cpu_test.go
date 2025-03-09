@@ -1709,6 +1709,74 @@ func TestORAIndirectY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// ROL
+func TestROLAccumulator(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0110, 0x2A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestROLZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x26, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestROLZeroPageX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x36, 0xF8, 0x00}
+	c.mem_write(0xFA, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xFA), 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestROLAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x2E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9005), 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestROLAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x3E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9007, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9007), 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestROLAccumulatorWhenCarrySet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0110, 0x2A, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_1101)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestROLZeroPageWhenCarrySet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x26, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0110)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.mem_read(0xF8), 0b0000_1101)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

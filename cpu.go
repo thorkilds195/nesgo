@@ -134,6 +134,11 @@ var OPTABLE = map[uint8]OpCode{
 	0x19: {0x19, ABSOLUTEY, 2, 2, (*CPU).ora},
 	0x01: {0x01, INDIRECTX, 2, 2, (*CPU).ora},
 	0x11: {0x11, INDIRECTY, 2, 2, (*CPU).ora},
+	0x2A: {0x2A, ACCUMULATOR, 1, 2, (*CPU).rol},
+	0x26: {0x26, ZEROPAGE, 2, 5, (*CPU).rol},
+	0x36: {0x36, ZEROPAGEX, 2, 6, (*CPU).rol},
+	0x2E: {0x2E, ABSOLUTE, 2, 6, (*CPU).rol},
+	0x3E: {0x3E, ABSOLUTEX, 2, 7, (*CPU).rol},
 }
 
 type CPU struct {
@@ -445,6 +450,36 @@ func (c *CPU) lsr(op OpCode) {
 	}
 	// Check if the bit 0 is set and set carry flag if it is
 	if pre_val&0b0000_0001 > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	c.set_zero_and_negative_flag(val)
+}
+
+func (c *CPU) rol(op OpCode) {
+	var pre_val uint8
+	var val uint8
+	if op.mode == ACCUMULATOR {
+		pre_val = c.register_a
+		val = c.register_a
+		val <<= 1
+		// Copy carry bit to bit 0
+		val = (c.status & 0b0000_0001) | (val & 0b1111_1110)
+		c.register_a = val
+	} else {
+		var addr uint16
+		val = c.interpret_mode(op.mode, &addr)
+		pre_val = val
+		val <<= 1
+		// Copy carry bit to bit 0
+		val = (c.status & 0b0000_0001) | (val & 0b1111_1110)
+		c.mem_write(addr, val)
+		c.program_counter++
+	}
+
+	// Check if the bit 7 is set and set carry flag if it is
+	if pre_val&0b1000_0000 > 0 {
 		c.set_carry_bit()
 	} else {
 		c.clear_carry_bit()
