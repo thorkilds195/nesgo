@@ -1607,12 +1607,105 @@ func TestLSRZeroPageClearCarry(t *testing.T) {
 }
 
 // NOP
-
 func TestNOP(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0x05, 0xEA, 0xA9, 0x08, 0x00}
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0x08)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+//ORA
+func TestORAImmediateLoadDataWhenBit7NotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b0000_0101, 0x09, 0b0000_0011, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAImmediateWhen0(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b0000_0000, 0x09, 0b0000_0000, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x00)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestORAImmediateWhenBit7Set(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa9, 0b1100_0001, 0x09, 0b0100_0000, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b_1100_0001)
+	assert_status(t, c.status, 0b1000_0000)
+}
+
+func TestORAZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x05, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAZeroPageX(t *testing.T) {
+	c := InitCPU()
+	// Sets x register to 0x0F and A to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xA9, 0b0000_0101, 0xA2, 0x0F, 0x15, 0x80, 0x00}
+	c.mem_write(0x8F, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x0D, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x92, 0x1D, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAAbsoluteY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x92, 0x19, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAIndirectX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0x01, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestORAIndirectY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0x11, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0000)
 }
 

@@ -126,6 +126,14 @@ var OPTABLE = map[uint8]OpCode{
 	0x4E: {0x4E, ABSOLUTE, 2, 6, (*CPU).lsr},
 	0x5E: {0x5E, ABSOLUTEX, 2, 7, (*CPU).lsr},
 	0xEA: {0xEA, IMPLIED, 2, 7, (*CPU).nop},
+	0x09: {0x09, IMMEDIATE, 2, 2, (*CPU).ora},
+	0x05: {0x05, ZEROPAGE, 2, 2, (*CPU).ora},
+	0x15: {0x15, ZEROPAGEX, 2, 2, (*CPU).ora},
+	0x0D: {0x0D, ABSOLUTE, 2, 2, (*CPU).ora},
+	0x1D: {0x1D, ABSOLUTEX, 2, 2, (*CPU).ora},
+	0x19: {0x19, ABSOLUTEY, 2, 2, (*CPU).ora},
+	0x01: {0x01, INDIRECTX, 2, 2, (*CPU).ora},
+	0x11: {0x11, INDIRECTY, 2, 2, (*CPU).ora},
 }
 
 type CPU struct {
@@ -386,6 +394,12 @@ func (c *CPU) and(op OpCode) {
 
 func (c *CPU) eor(op OpCode) {
 	c.register_a ^= c.interpret_mode(op.mode, nil)
+	c.program_counter++
+	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) ora(op OpCode) {
+	c.register_a |= c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 }
