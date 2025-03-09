@@ -17,6 +17,7 @@ const (
 	INDIRECTY
 	IMPLIED
 	ACCUMULATOR
+	INDIRECT
 )
 
 type OpCode struct {
@@ -117,6 +118,8 @@ var OPTABLE = map[uint8]OpCode{
 	0xEE: {0xEE, ABSOLUTE, 2, 2, (*CPU).inc},
 	0xFE: {0xFE, ABSOLUTEX, 2, 2, (*CPU).inc},
 	0xC8: {0xC8, IMPLIED, 2, 2, (*CPU).iny},
+	0x4C: {0x4C, ABSOLUTE, 3, 3, (*CPU).jmp},
+	0x6C: {0x6C, INDIRECT, 3, 5, (*CPU).jmp},
 }
 
 type CPU struct {
@@ -273,6 +276,13 @@ func (c *CPU) do_compare(val, reg uint8) {
 		c.set_zero_flag(1)
 	}
 	c.set_negative_flag(reg & val)
+}
+
+func (c *CPU) jmp(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr)
+	c.program_counter++
+	c.program_counter = addr
 }
 
 func (c *CPU) cmp(op OpCode) {
@@ -528,6 +538,13 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
 		target := c.mem_read_16(uint16(addr))
 		c.program_counter++
 		val = c.mem_read(target)
+		c.program_counter++
+	case INDIRECT:
+		in := c.mem_read_16(c.program_counter)
+		target := c.mem_read_16(in)
+		c.program_counter++
+		val = c.mem_read(target)
+		addr = target
 		c.program_counter++
 	default:
 		panic("Unknown addresing mode")

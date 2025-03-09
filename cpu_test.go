@@ -1471,6 +1471,28 @@ func TestINCAbsoluteX(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// JMP
+func TestJMPAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x4C, 0x01, 0xFF, 0x00}
+	c.mem_write(0xFF01, 0xA2)
+	c.mem_write(0xFF02, 0x09)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_x, 0x09)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestJMPIndirect(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x6C, 0x01, 0xFF, 0x00}
+	c.mem_write_16(0xFF01, 0xFF10)
+	c.mem_write(0xFF10, 0xA2)
+	c.mem_write(0xFF11, 0x09)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_x, 0x09)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
