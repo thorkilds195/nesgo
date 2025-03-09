@@ -152,6 +152,9 @@ var OPTABLE = map[uint8]OpCode{
 	0xF9: {0xF9, ABSOLUTEY, 2, 2, (*CPU).sbc},
 	0xE1: {0xE1, INDIRECTX, 2, 2, (*CPU).sbc},
 	0xF1: {0xF1, INDIRECTY, 2, 2, (*CPU).sbc},
+	0x38: {0x38, IMPLIED, 2, 2, (*CPU).sec},
+	0xF8: {0xF8, IMPLIED, 2, 2, (*CPU).sed},
+	0x78: {0x78, IMPLIED, 2, 2, (*CPU).sei},
 }
 
 type CPU struct {
@@ -265,6 +268,14 @@ func (c *CPU) set_carry_bit() {
 	c.status |= 0b0000_0001
 }
 
+func (c *CPU) set_decimal_bit() {
+	c.status |= 0b0000_1000
+}
+
+func (c *CPU) set_interrupt_bit() {
+	c.status |= 0b0000_0100
+}
+
 func (c *CPU) clear_carry_bit() {
 	c.status &= 0b1111_1110
 }
@@ -315,6 +326,18 @@ func (c *CPU) jmp(op OpCode) {
 	c.interpret_mode(op.mode, &addr)
 	c.program_counter++
 	c.program_counter = addr
+}
+
+func (c *CPU) sec(op OpCode) {
+	c.set_carry_bit()
+}
+
+func (c *CPU) sed(op OpCode) {
+	c.set_decimal_bit()
+}
+
+func (c *CPU) sei(op OpCode) {
+	c.set_interrupt_bit()
 }
 
 func (c *CPU) cmp(op OpCode) {

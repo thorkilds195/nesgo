@@ -1991,6 +1991,105 @@ func TestSBCIndirectY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0001)
 }
 
+//SEC
+func TestSECWhenNotSetInAdvance(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x38, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSECWhenSetInAdvance(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x38, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_000)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSECWithOtherInstrs(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x38, 0xA9, 0b0000_0111, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+//SED
+func TestSEDWhenNotSetInAdvance(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xF8, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_status(t, c.status, 0b0000_1000)
+}
+
+func TestSEDWhenSetInAdvance(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xF8, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_1000
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_000)
+	assert_status(t, c.status, 0b0000_1000)
+}
+
+func TestSEDWithOtherInstrs(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xF8, 0xA9, 0b0000_0111, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_1000)
+}
+
+//SEI
+func TestSEIWhenNotSetInAdvance(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x78, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_status(t, c.status, 0b0000_0100)
+}
+
+func TestSEIWhenSetInAdvance(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x78, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0100
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0000)
+	assert_status(t, c.status, 0b0000_0100)
+}
+
+func TestSEIWithOtherInstrs(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x78, 0xA9, 0b0000_0111, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0100)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
