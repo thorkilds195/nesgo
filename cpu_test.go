@@ -1606,6 +1606,16 @@ func TestLSRZeroPageClearCarry(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// NOP
+
+func TestNOP(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x05, 0xEA, 0xA9, 0x08, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x08)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

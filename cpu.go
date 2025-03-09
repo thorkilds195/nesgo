@@ -125,6 +125,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x56: {0x56, ZEROPAGEX, 2, 6, (*CPU).lsr},
 	0x4E: {0x4E, ABSOLUTE, 2, 6, (*CPU).lsr},
 	0x5E: {0x5E, ABSOLUTEX, 2, 7, (*CPU).lsr},
+	0xEA: {0xEA, IMPLIED, 2, 7, (*CPU).nop},
 }
 
 type CPU struct {
@@ -435,6 +436,9 @@ func (c *CPU) lsr(op OpCode) {
 		c.clear_carry_bit()
 	}
 	c.set_zero_and_negative_flag(val)
+}
+
+func (c *CPU) nop(op OpCode) {
 }
 
 func (c *CPU) bcc(op OpCode) {
