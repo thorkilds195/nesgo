@@ -2153,6 +2153,33 @@ func TestSTAIndirectY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// STX
+func TestSTXZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0111, 0x86, 0xF8, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), c.register_x)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTXZeroPageX(t *testing.T) {
+	c := InitCPU()
+	// Sets x register to 0x0F and A to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xA9, 0b0000_0111, 0xA2, 0x0F, 0x96, 0x80, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8F), c.register_x)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTXAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x8E, 0x05, 0x90, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9005), c.register_x)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
