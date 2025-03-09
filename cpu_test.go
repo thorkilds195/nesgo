@@ -34,7 +34,7 @@ func assert_status(t *testing.T, actual, expected uint8) {
 
 func assert_register(t *testing.T, actual, expected uint8) {
 	if !(actual == expected) {
-		t.Error(`Register not set to correct value`)
+		t.Errorf(`Register not set to correct value, expected %b but got %b`, expected, actual)
 	}
 }
 
@@ -1843,6 +1843,152 @@ func TestRORZeroPageWhenCarrySet(t *testing.T) {
 	c.Run()
 	assert_register(t, c.mem_read(0xF8), 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0000)
+}
+
+//SBC
+func TestSBCImmediateWithoutOverflowAndCarrySet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xE9, 0b0000_0001, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCImmediateWithoutOverflowAndCarryNotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xE9, 0b0000_0001, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCImmediateWithOverflowAndCarrySet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0001, 0xE9, 0b0000_0010, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b1111_1111)
+	assert_status(t, c.status, 0b1100_0000)
+}
+
+func TestSBCImmediateWithOverflowAndCarryNotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0001, 0xE9, 0b0000_0010, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
+	assert_register(t, c.register_a, 0b1111_1110)
+	assert_status(t, c.status, 0b1100_0000)
+}
+
+func TestSBCImmediateWhen0(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0001, 0xE9, 0b0000_0001, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0000)
+	assert_status(t, c.status, 0b0000_0011)
+}
+
+func TestSBCZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xE5, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCZeroPageX(t *testing.T) {
+	c := InitCPU()
+	// Sets x register to 0x0F and A to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xA9, 0b0000_0101, 0xA2, 0x0F, 0xF5, 0x80, 0x00}
+	c.mem_write(0x8F, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xED, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x92, 0xFD, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCAbsoluteY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x92, 0xF9, 0x00, 0x20, 0x00}
+	c.mem_write(0x2092, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCIndirectX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0xE1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestSBCIndirectY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0xF1, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.mem_write_16(0x8010, 0b0000_0001)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0100)
+	assert_status(t, c.status, 0b0000_0001)
 }
 
 // Combination tests

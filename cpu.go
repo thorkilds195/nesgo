@@ -144,6 +144,14 @@ var OPTABLE = map[uint8]OpCode{
 	0x76: {0x76, ZEROPAGEX, 2, 6, (*CPU).ror},
 	0x6E: {0x6E, ABSOLUTE, 2, 6, (*CPU).ror},
 	0x7E: {0x7E, ABSOLUTEX, 2, 7, (*CPU).ror},
+	0xE9: {0xE9, IMMEDIATE, 2, 2, (*CPU).sbc},
+	0xE5: {0xE5, ZEROPAGE, 2, 2, (*CPU).sbc},
+	0xF5: {0xF5, ZEROPAGEX, 2, 2, (*CPU).sbc},
+	0xED: {0xED, ABSOLUTE, 2, 2, (*CPU).sbc},
+	0xFD: {0xFD, ABSOLUTEX, 2, 2, (*CPU).sbc},
+	0xF9: {0xF9, ABSOLUTEY, 2, 2, (*CPU).sbc},
+	0xE1: {0xE1, INDIRECTX, 2, 2, (*CPU).sbc},
+	0xF1: {0xF1, INDIRECTY, 2, 2, (*CPU).sbc},
 }
 
 type CPU struct {
@@ -412,6 +420,39 @@ func (c *CPU) ora(op OpCode) {
 	c.register_a |= c.interpret_mode(op.mode, nil)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) sbc(op OpCode) {
+	val := c.interpret_mode(op.mode, nil)
+	// TODO: Understand what the below actually does properly
+	// The carry flag in 6502 is inverted when subtracting:
+	// if carry=1 => borrowIn=0, if carry=0 => borrowIn=1.
+	// So we take the CPU’s carry bit and flip it.
+	old_a := c.register_a
+	carry_bit := c.status & 0b00000001
+	borrow_in := uint16(1 - carry_bit) // 1 if carry=0, 0 if carry=1
+
+	// Do a 16-bit subtraction so we can detect borrow
+	temp := uint16(c.register_a) - uint16(val) - borrow_in
+	result := byte(temp & 0xFF) // 8-bit final
+
+	// Store the result back
+	c.register_a = result
+
+	// Determine if a borrow occurred by seeing if the 16-bit result is < 0x100
+	// If temp < 0x100, it fits in 8 bits => no borrow => set carry
+	// If temp >= 0x100 (wrap-around), that means a borrow => clear carry
+	if temp < 0x100 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+
+	c.compute_overflow_bit(old_a, val, result)
+
+	c.set_zero_and_negative_flag(result)
+
+	c.program_counter++
 }
 
 func (c *CPU) asl(op OpCode) {
