@@ -120,6 +120,11 @@ var OPTABLE = map[uint8]OpCode{
 	0xC8: {0xC8, IMPLIED, 2, 2, (*CPU).iny},
 	0x4C: {0x4C, ABSOLUTE, 3, 3, (*CPU).jmp},
 	0x6C: {0x6C, INDIRECT, 3, 5, (*CPU).jmp},
+	0x4A: {0x4A, ACCUMULATOR, 1, 2, (*CPU).lsr},
+	0x46: {0x46, ZEROPAGE, 2, 5, (*CPU).lsr},
+	0x56: {0x56, ZEROPAGEX, 2, 6, (*CPU).lsr},
+	0x4E: {0x4E, ABSOLUTE, 2, 6, (*CPU).lsr},
+	0x5E: {0x5E, ABSOLUTEX, 2, 7, (*CPU).lsr},
 }
 
 type CPU struct {
@@ -385,16 +390,51 @@ func (c *CPU) eor(op OpCode) {
 }
 
 func (c *CPU) asl(op OpCode) {
+	var pre_val uint8
+	var val uint8
 	if op.mode == ACCUMULATOR {
+		pre_val = c.register_a
 		c.register_a <<= 1
+		val = c.register_a
 	} else {
 		var addr uint16
-		val := c.interpret_mode(op.mode, &addr)
+		val = c.interpret_mode(op.mode, &addr)
+		pre_val = val
 		val <<= 1
 		c.mem_write(addr, val)
+		c.program_counter++
 	}
-	c.program_counter++
-	c.set_zero_and_negative_flag(c.register_a)
+	// Check if the bit 7 is set and set carry flag if it is
+	if pre_val&0b1000_0000 > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	c.set_zero_and_negative_flag(val)
+}
+
+func (c *CPU) lsr(op OpCode) {
+	var pre_val uint8
+	var val uint8
+	if op.mode == ACCUMULATOR {
+		pre_val = c.register_a
+		c.register_a >>= 1
+		val = c.register_a
+	} else {
+		var addr uint16
+		val = c.interpret_mode(op.mode, &addr)
+		pre_val = val
+		val >>= 1
+		c.mem_write(addr, val)
+		c.program_counter++
+	}
+	// Check if the bit 0 is set and set carry flag if it is
+	if pre_val&0b0000_0001 > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	c.set_zero_and_negative_flag(val)
 }
 
 func (c *CPU) bcc(op OpCode) {

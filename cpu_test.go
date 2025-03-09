@@ -587,7 +587,7 @@ func TestANDIndirectY(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
-//Asl
+//ASL
 func TestASLAccumulator(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0x0A, 0x00}
@@ -602,7 +602,7 @@ func TestASLZeroPage(t *testing.T) {
 	c.mem_write(0xF8, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.mem_read(0xF8), 0b0000_0110)
-	assert_status(t, c.status, 0b0000_0010)
+	assert_status(t, c.status, 0b0000_0000)
 }
 
 func TestASLZeroPageX(t *testing.T) {
@@ -611,7 +611,7 @@ func TestASLZeroPageX(t *testing.T) {
 	c.mem_write(0xFA, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.mem_read(0xFA), 0b0000_0110)
-	assert_status(t, c.status, 0b0000_0010)
+	assert_status(t, c.status, 0b0000_0000)
 }
 
 func TestASLAbsolute(t *testing.T) {
@@ -620,7 +620,7 @@ func TestASLAbsolute(t *testing.T) {
 	c.mem_write(0x9005, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.mem_read(0x9005), 0b0000_0110)
-	assert_status(t, c.status, 0b0000_0010)
+	assert_status(t, c.status, 0b0000_0000)
 }
 
 func TestASLAbsoluteX(t *testing.T) {
@@ -629,7 +629,41 @@ func TestASLAbsoluteX(t *testing.T) {
 	c.mem_write(0x9007, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.mem_read(0x9007), 0b0000_0110)
-	assert_status(t, c.status, 0b0000_0010)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestASLAccumulatorSetsCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b1000_0011, 0x0A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestASLAccumulatorClearCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b1000_0011, 0x0A, 0x0A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestASLZeroPageSetsCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x06, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b1000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_0110)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestASLZeroPageClearCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x06, 0xF8, 0x06, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b1000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_1100)
+	assert_status(t, c.status, 0b0000_0000)
 }
 
 //BCC
@@ -1490,6 +1524,85 @@ func TestJMPIndirect(t *testing.T) {
 	c.mem_write(0xFF11, 0x09)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 0x09)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+// LSR
+func TestLSRAccumulator(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0110, 0x4A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestLSRZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x46, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestLSRZeroPageX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x56, 0xF8, 0x00}
+	c.mem_write(0xFA, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xFA), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestLSRAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x4E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9005), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestLSRAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x5E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9007, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9007), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestLSRAccumulatorSetsCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0011, 0x4A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestLSRAccumulatorClearCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_1100, 0x4A, 0x4A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestLSRZeroPageSetsCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x46, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0011)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_0001)
+	assert_status(t, c.status, 0b0000_0001)
+}
+
+func TestLSRZeroPageClearCarry(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x46, 0xF8, 0x46, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_1100)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0000)
 }
 
