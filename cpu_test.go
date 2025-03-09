@@ -1777,6 +1777,74 @@ func TestROLZeroPageWhenCarrySet(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// ROR
+func TestRORAccumulator(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0110, 0x6A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestRORZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x66, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestRORZeroPageX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x76, 0xF8, 0x00}
+	c.mem_write(0xFA, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xFA), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestRORAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x6E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9005, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9005), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestRORAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA2, 0x02, 0x7E, 0x05, 0x90, 0x00}
+	c.mem_write(0x9007, 0b0000_0110)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9007), 0b0000_0011)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestRORAccumulatorWhenCarrySet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_1100, 0x6A, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.register_a, 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestRORZeroPageWhenCarrySet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x66, 0xF8, 0x00}
+	c.mem_write(0xF8, 0b0000_1100)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0001
+	c.Run()
+	assert_register(t, c.mem_read(0xF8), 0b0000_0111)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
