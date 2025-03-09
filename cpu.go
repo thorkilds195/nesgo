@@ -155,6 +155,13 @@ var OPTABLE = map[uint8]OpCode{
 	0x38: {0x38, IMPLIED, 2, 2, (*CPU).sec},
 	0xF8: {0xF8, IMPLIED, 2, 2, (*CPU).sed},
 	0x78: {0x78, IMPLIED, 2, 2, (*CPU).sei},
+	0x85: {0x85, ZEROPAGE, 2, 2, (*CPU).sta},
+	0x95: {0x95, ZEROPAGEX, 2, 2, (*CPU).sta},
+	0x8D: {0x8D, ABSOLUTE, 2, 2, (*CPU).sta},
+	0x9D: {0x9D, ABSOLUTEX, 2, 2, (*CPU).sta},
+	0x99: {0x99, ABSOLUTEY, 2, 2, (*CPU).sta},
+	0x81: {0x81, INDIRECTX, 2, 2, (*CPU).sta},
+	0x91: {0x91, INDIRECTY, 2, 2, (*CPU).sta},
 }
 
 type CPU struct {
@@ -338,6 +345,13 @@ func (c *CPU) sed(op OpCode) {
 
 func (c *CPU) sei(op OpCode) {
 	c.set_interrupt_bit()
+}
+
+func (c *CPU) sta(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr)
+	c.program_counter++
+	c.mem_write(addr, c.register_a)
 }
 
 func (c *CPU) cmp(op OpCode) {
@@ -720,16 +734,18 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
 		addr = in + uint16(c.register_y)
 		val = c.mem_read(addr)
 	case INDIRECTX:
-		addr := next_val + c.register_x
-		target := c.mem_read_16(uint16(addr))
+		in := next_val + c.register_x
+		target := c.mem_read_16(uint16(in))
 		c.program_counter++
 		val = c.mem_read(target)
+		addr = target
 		c.program_counter++
 	case INDIRECTY:
-		addr := next_val + c.register_y
-		target := c.mem_read_16(uint16(addr))
+		in := next_val + c.register_y
+		target := c.mem_read_16(uint16(in))
 		c.program_counter++
 		val = c.mem_read(target)
+		addr = target
 		c.program_counter++
 	case INDIRECT:
 		in := c.mem_read_16(c.program_counter)

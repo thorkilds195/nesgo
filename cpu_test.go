@@ -2090,6 +2090,69 @@ func TestSEIWithOtherInstrs(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0100)
 }
 
+// STA
+func TestSTAZeroPage(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0111, 0x85, 0xF8, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0xF8), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTAZeroPageX(t *testing.T) {
+	c := InitCPU()
+	// Sets x register to 0x0F and A to 0x80
+	// This should fetch from memory location 0x8F
+	vec := []uint8{0xA9, 0b0000_0111, 0xA2, 0x0F, 0x95, 0x80, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8F), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTAAbsolute(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0x8D, 0x05, 0x90, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x9005), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTAAbsoluteX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x02, 0x9D, 0x00, 0x20, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x2002), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTAAbsoluteY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x02, 0x99, 0x00, 0x20, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x2002), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTAIndirectX(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0x81, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8010), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestSTAIndirectY(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0x91, 0x20, 0x00}
+	c.mem_write(0x24, 0x10)
+	c.mem_write(0x25, 0x80)
+	c.LoadAndRun(vec)
+	assert_register(t, c.mem_read(0x8010), c.register_a)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
