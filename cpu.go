@@ -172,6 +172,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x8A: {0x8A, IMPLIED, 2, 2, (*CPU).txa},
 	0x98: {0x98, IMPLIED, 2, 2, (*CPU).tya},
 	0x20: {0x20, ABSOLUTE, 2, 2, (*CPU).jsr},
+	0x48: {0x48, IMPLIED, 2, 2, (*CPU).pha},
 }
 
 type CPU struct {
@@ -365,6 +366,10 @@ func (c *CPU) jsr(op OpCode) {
 	ret_addr := c.program_counter
 	c.push_16(ret_addr)
 	c.program_counter = addr
+}
+
+func (c *CPU) pha(op OpCode) {
+	c.push(c.register_a)
 }
 
 func (c *CPU) sec(op OpCode) {

@@ -2302,6 +2302,17 @@ func TestJSRLDA(t *testing.T) {
 	assert_register(t, c.register_a, 0x09)
 }
 
+// PHA
+func TestPHA(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0xFC, 0x48, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0xFC)
+	if !(c.mem_read_16(0x01FF) == 0xFC) {
+		t.Error("Stack pointer return value is wrong")
+	}
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
