@@ -171,6 +171,7 @@ var OPTABLE = map[uint8]OpCode{
 	0xA8: {0xA8, IMPLIED, 2, 2, (*CPU).tay},
 	0x8A: {0x8A, IMPLIED, 2, 2, (*CPU).txa},
 	0x98: {0x98, IMPLIED, 2, 2, (*CPU).tya},
+	0x20: {0x20, ABSOLUTE, 2, 2, (*CPU).jsr},
 }
 
 type CPU struct {
@@ -179,6 +180,7 @@ type CPU struct {
 	register_y      uint8
 	status          uint8
 	program_counter uint16
+	stack_pointer   uint8
 	memory          [0xFFFF]uint8
 }
 
@@ -198,6 +200,7 @@ func (c *CPU) Reset() {
 	c.status = 0
 
 	c.program_counter = c.mem_read_16(0xFFFC)
+	c.stack_pointer = 0xFF
 }
 
 func (c *CPU) Run() {
@@ -220,6 +223,18 @@ func (c *CPU) Load(program []uint8) {
 	copy(c.memory[0x8000:], program)
 
 	c.mem_write_16(0xFFFC, 0x8000)
+}
+
+func (c *CPU) push(val uint8) {
+	c.memory[0x0100+uint16(c.stack_pointer)] = val
+	c.stack_pointer--
+}
+
+func (c *CPU) push_16(val uint16) {
+	lo := uint8(val & 0xFF)
+	hi := uint8(val >> 8)
+	c.push(hi)
+	c.push(lo)
 }
 
 func (c *CPU) brk(op OpCode) {
@@ -341,6 +356,14 @@ func (c *CPU) jmp(op OpCode) {
 	var addr uint16
 	c.interpret_mode(op.mode, &addr)
 	c.program_counter++
+	c.program_counter = addr
+}
+
+func (c *CPU) jsr(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr)
+	ret_addr := c.program_counter
+	c.push_16(ret_addr)
 	c.program_counter = addr
 }
 

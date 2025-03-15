@@ -2282,6 +2282,26 @@ func TestSTYAbsolute(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// JSR
+func TestJSRStackDecrement(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x20, 0x01, 0x82, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.stack_pointer, 0xFD)
+	if !(c.mem_read_16(0x01FE) == 0x8002) {
+		t.Error("Stack pointer return value is wrong")
+	}
+}
+
+func TestJSRLDA(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x20, 0x01, 0x82, 0x00}
+	c.mem_write(0x8201, 0xA9)
+	c.mem_write(0x8202, 0x09)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x09)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
