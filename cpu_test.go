@@ -317,6 +317,31 @@ func TestTAXLoadDataWhenBit7Set(t *testing.T) {
 	assert_status(t, c.status, 0b1000_0000)
 }
 
+// TXA
+func TestTXALoadDataWhenBit7NotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x05, 0x8A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x05)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
+func TestTXALoadDataWhen0(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0x00, 0x8A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x00)
+	assert_status(t, c.status, 0b0000_0010)
+}
+
+func TestTXALoadDataWhenBit7Set(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xa2, 0b_1100_0000, 0x8A, 0x00}
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0b_1100_0000)
+	assert_status(t, c.status, 0b1000_0000)
+}
+
 // TAY
 func TestTAYLoadDataWhenBit7NotSet(t *testing.T) {
 	c := InitCPU()

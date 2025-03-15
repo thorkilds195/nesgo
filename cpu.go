@@ -169,6 +169,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x94: {0x94, ZEROPAGEX, 2, 2, (*CPU).sty},
 	0x8C: {0x8C, ABSOLUTE, 2, 2, (*CPU).sty},
 	0xA8: {0xA8, IMPLIED, 2, 2, (*CPU).tay},
+	0x8A: {0x8A, IMPLIED, 2, 2, (*CPU).txa},
 }
 
 type CPU struct {
@@ -684,6 +685,11 @@ func (c *CPU) ldx(op OpCode) {
 func (c *CPU) tax(op OpCode) {
 	c.register_x = c.register_a
 	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) txa(op OpCode) {
+	c.register_a = c.register_x
+	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) tay(op OpCode) {
