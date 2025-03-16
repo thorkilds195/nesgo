@@ -173,6 +173,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x98: {0x98, IMPLIED, 2, 2, (*CPU).tya},
 	0x20: {0x20, ABSOLUTE, 2, 2, (*CPU).jsr},
 	0x48: {0x48, IMPLIED, 2, 2, (*CPU).pha},
+	0x08: {0x08, IMPLIED, 2, 2, (*CPU).php},
 }
 
 type CPU struct {
@@ -370,6 +371,10 @@ func (c *CPU) jsr(op OpCode) {
 
 func (c *CPU) pha(op OpCode) {
 	c.push(c.register_a)
+}
+
+func (c *CPU) php(op OpCode) {
+	c.push(c.status)
 }
 
 func (c *CPU) sec(op OpCode) {

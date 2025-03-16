@@ -2313,6 +2313,17 @@ func TestPHA(t *testing.T) {
 	}
 }
 
+// PHP
+func TestPHP(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0xA9, 0x00, 0x08, 0x00}
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, 0b0000_0010)
+	if !(c.mem_read_16(0x01FF) == 0b0000_0010) {
+		t.Error("Stack pointer return value is wrong")
+	}
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()
