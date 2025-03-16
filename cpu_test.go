@@ -2336,6 +2336,18 @@ func TestPLA(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// RTS
+func TestRTS(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x20, 0x01, 0x82, 0xA2, 0x09, 0x00}
+	c.mem_write(0x8201, 0xA9)
+	c.mem_write(0x8202, 0x12)
+	c.mem_write(0x8203, 0x60)
+	c.LoadAndRun(vec)
+	assert_register(t, c.register_a, 0x12)
+	assert_register(t, c.register_x, 0x09)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

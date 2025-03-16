@@ -175,6 +175,9 @@ var OPTABLE = map[uint8]OpCode{
 	0x48: {0x48, IMPLIED, 2, 2, (*CPU).pha},
 	0x08: {0x08, IMPLIED, 2, 2, (*CPU).php},
 	0x68: {0x68, IMPLIED, 2, 2, (*CPU).pla},
+	0x28: {0x28, IMPLIED, 2, 2, (*CPU).plp},
+	0x40: {0x40, IMPLIED, 2, 2, (*CPU).rti},
+	0x60: {0x60, IMPLIED, 2, 2, (*CPU).rts},
 }
 
 type CPU struct {
@@ -382,6 +385,21 @@ func (c *CPU) pha(op OpCode) {
 func (c *CPU) pla(op OpCode) {
 	c.register_a = c.pull()
 	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) plp(op OpCode) {
+	c.status = c.pull()
+	c.set_zero_and_negative_flag(c.register_a)
+}
+
+func (c *CPU) rti(op OpCode) {
+
+}
+
+func (c *CPU) rts(op OpCode) {
+	lo := c.pull()
+	hi := c.pull()
+	c.program_counter = make_16_bit(hi, lo) + 1
 }
 
 func (c *CPU) php(op OpCode) {
