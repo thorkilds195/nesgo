@@ -2324,6 +2324,18 @@ func TestPHP(t *testing.T) {
 	}
 }
 
+// PLA
+func TestPLA(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x68, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.push(0x12)
+	c.Run()
+	assert_register(t, c.register_a, 0x12)
+	assert_status(t, c.status, 0b0000_0000)
+}
+
 // Combination tests
 func TestFiveOpsWorkingTogether(t *testing.T) {
 	c := InitCPU()

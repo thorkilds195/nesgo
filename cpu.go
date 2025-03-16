@@ -174,6 +174,7 @@ var OPTABLE = map[uint8]OpCode{
 	0x20: {0x20, ABSOLUTE, 2, 2, (*CPU).jsr},
 	0x48: {0x48, IMPLIED, 2, 2, (*CPU).pha},
 	0x08: {0x08, IMPLIED, 2, 2, (*CPU).php},
+	0x68: {0x68, IMPLIED, 2, 2, (*CPU).pla},
 }
 
 type CPU struct {
@@ -230,6 +231,11 @@ func (c *CPU) Load(program []uint8) {
 func (c *CPU) push(val uint8) {
 	c.memory[0x0100+uint16(c.stack_pointer)] = val
 	c.stack_pointer--
+}
+
+func (c *CPU) pull() uint8 {
+	c.stack_pointer++
+	return c.mem_read(0x0100 + uint16(c.stack_pointer))
 }
 
 func (c *CPU) push_16(val uint16) {
@@ -371,6 +377,11 @@ func (c *CPU) jsr(op OpCode) {
 
 func (c *CPU) pha(op OpCode) {
 	c.push(c.register_a)
+}
+
+func (c *CPU) pla(op OpCode) {
+	c.register_a = c.pull()
+	c.set_zero_and_negative_flag(c.register_a)
 }
 
 func (c *CPU) php(op OpCode) {
