@@ -178,6 +178,8 @@ var OPTABLE = map[uint8]OpCode{
 	0x28: {0x28, IMPLIED, 2, 2, (*CPU).plp},
 	0x40: {0x40, IMPLIED, 2, 2, (*CPU).rti},
 	0x60: {0x60, IMPLIED, 2, 2, (*CPU).rts},
+	// Custom instruction to quit and leave emulator in current state
+	0x02: {0x02, IMPLIED, 2, 2, (*CPU).hlt},
 }
 
 type CPU struct {
@@ -187,7 +189,7 @@ type CPU struct {
 	status          uint8
 	program_counter uint16
 	stack_pointer   uint8
-	memory          [0xFFFF]uint8
+	memory          [0x10000]uint8
 }
 
 func InitCPU() *CPU {
@@ -219,7 +221,7 @@ func (c *CPU) Run() {
 			panic(fmt.Sprintf("No instr found for %x", opcode))
 		}
 		op.f_call(c, op)
-		if opcode == 0x00 {
+		if opcode == 0x00 || opcode == 0x02 {
 			return
 		}
 	}
@@ -249,8 +251,12 @@ func (c *CPU) push_16(val uint16) {
 }
 
 func (c *CPU) brk(op OpCode) {
-	// TODO: Implement this in full
-	c.program_counter++
+	c.push_16(c.program_counter + 2)
+	l_status := c.status
+	l_status |= 0b0011_0000
+	c.push(l_status)
+	c.status |= 0b0000_0100
+	c.program_counter = c.mem_read_16(0xFFFE)
 }
 
 func (c *CPU) mem_read(addr uint16) uint8 {
@@ -392,11 +398,14 @@ func (c *CPU) plp(op OpCode) {
 	c.set_zero_and_negative_flag(c.register_a)
 }
 
+func (c *CPU) hlt(op OpCode) {
+}
+
 func (c *CPU) rti(op OpCode) {
 	c.status = c.pull()
-	hi := c.pull()
 	lo := c.pull()
-	c.program_counter = make_16_bit(hi, lo) + 1
+	hi := c.pull()
+	c.program_counter = make_16_bit(hi, lo)
 }
 
 func (c *CPU) rts(op OpCode) {
