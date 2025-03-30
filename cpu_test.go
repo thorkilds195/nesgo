@@ -2336,6 +2336,18 @@ func TestPLA(t *testing.T) {
 	assert_status(t, c.status, 0b0000_0000)
 }
 
+// PLP
+func TestPLP(t *testing.T) {
+	flag := uint8(0b0000_0010)
+	c := InitCPU()
+	vec := []uint8{0x28, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.push(flag)
+	c.Run()
+	assert_status(t, c.status, flag)
+}
+
 // RTS
 func TestRTS(t *testing.T) {
 	c := InitCPU()
@@ -2346,6 +2358,20 @@ func TestRTS(t *testing.T) {
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0x12)
 	assert_register(t, c.register_x, 0x09)
+}
+
+// RTI
+func TestRTI(t *testing.T) {
+	flag := uint8(0b0000_0010)
+	c := InitCPU()
+	vec := []uint8{0x20, 0x01, 0x82, 0x00}
+	c.mem_write(0x8201, 0xA9)
+	c.mem_write(0x8202, 0xFF)
+	c.mem_write(0x8203, 0x40)
+	c.push(flag)
+	c.LoadAndRun(vec)
+	assert_status(t, c.status, flag)
+	assert_register(t, c.register_a, 0xFF)
 }
 
 // Combination tests

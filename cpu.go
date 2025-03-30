@@ -393,7 +393,10 @@ func (c *CPU) plp(op OpCode) {
 }
 
 func (c *CPU) rti(op OpCode) {
-
+	c.status = c.pull()
+	hi := c.pull()
+	lo := c.pull()
+	c.program_counter = make_16_bit(hi, lo) + 1
 }
 
 func (c *CPU) rts(op OpCode) {
