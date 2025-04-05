@@ -211,11 +211,12 @@ func (c *CPU) Reset() {
 	c.stack_pointer = 0xFF
 }
 
-func (c *CPU) Run() {
+func (c *CPU) RunWithCallback(f_call func()) {
 	var op OpCode
 	var ok bool
 	for {
-		opcode := c.mem_read(c.program_counter)
+		f_call()
+		opcode := c.MemRead(c.program_counter)
 		c.program_counter++
 		if op, ok = OPTABLE[opcode]; !ok {
 			panic(fmt.Sprintf("No instr found for %x", opcode))
@@ -227,10 +228,26 @@ func (c *CPU) Run() {
 	}
 }
 
+func (c *CPU) Run() {
+	c.RunWithCallback(func() {})
+}
+
 func (c *CPU) Load(program []uint8) {
 	copy(c.memory[0x8000:], program)
 
 	c.mem_write_16(0xFFFC, 0x8000)
+}
+
+func (c *CPU) Step(f_call func()) bool {
+	f_call()
+	opcode := c.MemRead(c.program_counter)
+	c.program_counter++
+	op, ok := OPTABLE[opcode]
+	if !ok {
+		panic(fmt.Sprintf("Unknown opcode: %x", opcode))
+	}
+	op.f_call(c, op)
+	return opcode != 0x00 && opcode != 0x02
 }
 
 func (c *CPU) push(val uint8) {
@@ -240,7 +257,7 @@ func (c *CPU) push(val uint8) {
 
 func (c *CPU) pull() uint8 {
 	c.stack_pointer++
-	return c.mem_read(0x0100 + uint16(c.stack_pointer))
+	return c.MemRead(0x0100 + uint16(c.stack_pointer))
 }
 
 func (c *CPU) push_16(val uint16) {
@@ -259,11 +276,11 @@ func (c *CPU) brk(op OpCode) {
 	c.program_counter = c.mem_read_16(0xFFFE)
 }
 
-func (c *CPU) mem_read(addr uint16) uint8 {
+func (c *CPU) MemRead(addr uint16) uint8 {
 	return c.memory[addr]
 }
 
-func (c *CPU) mem_write(addr uint16, v uint8) {
+func (c *CPU) MemWrite(addr uint16, v uint8) {
 	c.memory[addr] = v
 }
 
@@ -382,6 +399,10 @@ func (c *CPU) jsr(op OpCode) {
 	ret_addr := c.program_counter
 	c.push_16(ret_addr)
 	c.program_counter = addr
+	/*
+		addr := c.mem_read_16(c.program_counter)
+		c.push_16(c.program_counter + 2 - 1)
+		c.program_counter = addr */
 }
 
 func (c *CPU) pha(op OpCode) {
@@ -434,21 +455,21 @@ func (c *CPU) sta(op OpCode) {
 	var addr uint16
 	c.interpret_mode(op.mode, &addr)
 	c.program_counter++
-	c.mem_write(addr, c.register_a)
+	c.MemWrite(addr, c.register_a)
 }
 
 func (c *CPU) stx(op OpCode) {
 	var addr uint16
 	c.interpret_mode(op.mode, &addr)
 	c.program_counter++
-	c.mem_write(addr, c.register_x)
+	c.MemWrite(addr, c.register_x)
 }
 
 func (c *CPU) sty(op OpCode) {
 	var addr uint16
 	c.interpret_mode(op.mode, &addr)
 	c.program_counter++
-	c.mem_write(addr, c.register_x)
+	c.MemWrite(addr, c.register_y)
 }
 
 func (c *CPU) cmp(op OpCode) {
@@ -601,7 +622,7 @@ func (c *CPU) asl(op OpCode) {
 		val = c.interpret_mode(op.mode, &addr)
 		pre_val = val
 		val <<= 1
-		c.mem_write(addr, val)
+		c.MemWrite(addr, val)
 		c.program_counter++
 	}
 	// Check if the bit 7 is set and set carry flag if it is
@@ -625,7 +646,7 @@ func (c *CPU) lsr(op OpCode) {
 		val = c.interpret_mode(op.mode, &addr)
 		pre_val = val
 		val >>= 1
-		c.mem_write(addr, val)
+		c.MemWrite(addr, val)
 		c.program_counter++
 	}
 	// Check if the bit 0 is set and set carry flag if it is
@@ -654,7 +675,7 @@ func (c *CPU) rol(op OpCode) {
 		val <<= 1
 		// Copy carry bit to bit 0
 		val = (c.status & 0b0000_0001) | (val & 0b1111_1110)
-		c.mem_write(addr, val)
+		c.MemWrite(addr, val)
 		c.program_counter++
 	}
 
@@ -684,7 +705,7 @@ func (c *CPU) ror(op OpCode) {
 		val >>= 1
 		// Copy carry bit to bit 7
 		val = (c.status & 0b0000_0001) | (val & 0b0111_1111)
-		c.mem_write(addr, val)
+		c.MemWrite(addr, val)
 		c.program_counter++
 	}
 
@@ -792,7 +813,7 @@ func (c *CPU) dec(op OpCode) {
 	val := c.interpret_mode(op.mode, &addr)
 	c.program_counter++
 	val--
-	c.mem_write(addr, val)
+	c.MemWrite(addr, val)
 	c.set_zero_and_negative_flag(val)
 }
 
@@ -801,7 +822,7 @@ func (c *CPU) inc(op OpCode) {
 	val := c.interpret_mode(op.mode, &addr)
 	c.program_counter++
 	val++
-	c.mem_write(addr, val)
+	c.MemWrite(addr, val)
 	c.set_zero_and_negative_flag(val)
 }
 
@@ -818,52 +839,52 @@ func (c *CPU) dey(op OpCode) {
 func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16) uint8 {
 	var val uint8
 	var addr uint16
-	next_val := c.mem_read(c.program_counter)
+	next_val := c.MemRead(c.program_counter)
 	switch m {
 	case IMMEDIATE, RELATIVE:
 		val = next_val
 	case ZEROPAGE:
 		addr = uint16(next_val)
-		val = c.mem_read(addr)
+		val = c.MemRead(addr)
 	case ZEROPAGEX:
 		addr = uint16(next_val + c.register_x)
-		val = c.mem_read(addr)
+		val = c.MemRead(addr)
 	case ZEROPAGEY:
 		addr = uint16(next_val + c.register_y)
-		val = c.mem_read(addr)
+		val = c.MemRead(addr)
 	case ABSOLUTE:
 		addr = c.mem_read_16(c.program_counter)
 		c.program_counter++
-		val = c.mem_read(addr)
+		val = c.MemRead(addr)
 	case ABSOLUTEX:
 		in := c.mem_read_16(c.program_counter)
 		c.program_counter++
 		addr = in + uint16(c.register_x)
-		val = c.mem_read(addr)
+		val = c.MemRead(addr)
 	case ABSOLUTEY:
 		in := c.mem_read_16(c.program_counter)
 		c.program_counter++
 		addr = in + uint16(c.register_y)
-		val = c.mem_read(addr)
+		val = c.MemRead(addr)
 	case INDIRECTX:
 		in := next_val + c.register_x
 		target := c.mem_read_16(uint16(in))
 		c.program_counter++
-		val = c.mem_read(target)
+		val = c.MemRead(target)
 		addr = target
 		c.program_counter++
 	case INDIRECTY:
 		in := next_val + c.register_y
 		target := c.mem_read_16(uint16(in))
 		c.program_counter++
-		val = c.mem_read(target)
+		val = c.MemRead(target)
 		addr = target
 		c.program_counter++
 	case INDIRECT:
 		in := c.mem_read_16(c.program_counter)
 		target := c.mem_read_16(in)
 		c.program_counter++
-		val = c.mem_read(target)
+		val = c.MemRead(target)
 		addr = target
 		c.program_counter++
 	default:

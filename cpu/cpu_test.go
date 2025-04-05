@@ -66,7 +66,7 @@ func TestLDAImmediateLoadDataWhenBit7Set(t *testing.T) {
 func TestLDAZeroPageLoadDataWhenBit7NotSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA5, 0x10, 0x00}
-	c.mem_write(0x10, 10)
+	c.MemWrite(0x10, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -77,7 +77,7 @@ func TestLDAZeroPageXLoadDataWhenBit7NotSet(t *testing.T) {
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xa2, 0x0F, 0xB5, 0x80, 0x00}
-	c.mem_write(0x8F, 10)
+	c.MemWrite(0x8F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -88,7 +88,7 @@ func TestLDAZeroPageXLoadDataWhenOverflow(t *testing.T) {
 	// Sets x register to 0xFF and A to 0x80
 	// This should fetch from memory location 0x8F due to overflow
 	vec := []uint8{0xa2, 0xFF, 0xB5, 0x80, 0x00}
-	c.mem_write(0x7F, 10)
+	c.MemWrite(0x7F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -97,7 +97,7 @@ func TestLDAZeroPageXLoadDataWhenOverflow(t *testing.T) {
 func TestLDAAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xAD, 0x05, 0x80, 0x00}
-	c.mem_write(0x8005, 10)
+	c.MemWrite(0x8005, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -106,7 +106,7 @@ func TestLDAAbsolute(t *testing.T) {
 func TestLDAAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x92, 0xBD, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 10)
+	c.MemWrite(0x2092, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -115,7 +115,7 @@ func TestLDAAbsoluteX(t *testing.T) {
 func TestLDAAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x92, 0xB9, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 10)
+	c.MemWrite(0x2092, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -124,8 +124,8 @@ func TestLDAAbsoluteY(t *testing.T) {
 func TestLDAIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x04, 0xA1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
@@ -135,8 +135,8 @@ func TestLDAIndirectX(t *testing.T) {
 func TestLDAIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa0, 0x04, 0xB1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 10)
@@ -172,7 +172,7 @@ func TestLDXImmediateLoadDataWhenBit7Set(t *testing.T) {
 func TestLDXZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA6, 0x10, 0x00}
-	c.mem_write(0x10, 10)
+	c.MemWrite(0x10, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -183,7 +183,7 @@ func TestLDXZeroPageY(t *testing.T) {
 	// Sets y register to 0x0F and x to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xa0, 0x0F, 0xB6, 0x80, 0x00}
-	c.mem_write(0x8F, 10)
+	c.MemWrite(0x8F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -194,7 +194,7 @@ func TestLDXZeroPageYLoadDataWhenOverflow(t *testing.T) {
 	// Sets y register to 0xFF and x to 0x80
 	// This should fetch from memory location 0x8F due to overflow
 	vec := []uint8{0xA0, 0xFF, 0xB6, 0x80, 0x00}
-	c.mem_write(0x7F, 10)
+	c.MemWrite(0x7F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -203,7 +203,7 @@ func TestLDXZeroPageYLoadDataWhenOverflow(t *testing.T) {
 func TestLDXAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xAE, 0x05, 0x80, 0x00}
-	c.mem_write(0x8005, 10)
+	c.MemWrite(0x8005, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -212,7 +212,7 @@ func TestLDXAbsolute(t *testing.T) {
 func TestLDXAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x92, 0xBE, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 10)
+	c.MemWrite(0x2092, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -246,7 +246,7 @@ func TestLDYImmediateLoadDataWhenBit7Set(t *testing.T) {
 func TestLDYZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA4, 0x10, 0x00}
-	c.mem_write(0x10, 10)
+	c.MemWrite(0x10, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_y, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -257,7 +257,7 @@ func TestLDYZeroPageX(t *testing.T) {
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xa2, 0x0F, 0xB4, 0x80, 0x00}
-	c.mem_write(0x8F, 10)
+	c.MemWrite(0x8F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_y, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -268,7 +268,7 @@ func TestLDYZeroPageXLoadDataWhenOverflow(t *testing.T) {
 	// Sets x register to 0xFF and A to 0x80
 	// This should fetch from memory location 0x8F due to overflow
 	vec := []uint8{0xa2, 0xFF, 0xB4, 0x80, 0x00}
-	c.mem_write(0x7F, 10)
+	c.MemWrite(0x7F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_y, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -277,7 +277,7 @@ func TestLDYZeroPageXLoadDataWhenOverflow(t *testing.T) {
 func TestLDYAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xAC, 0x05, 0x80, 0x00}
-	c.mem_write(0x8005, 10)
+	c.MemWrite(0x8005, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_y, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -286,7 +286,7 @@ func TestLDYAbsolute(t *testing.T) {
 func TestLDYAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x92, 0xBC, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 10)
+	c.MemWrite(0x2092, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_y, 10)
 	assert_status(t, c.status, 0b0000_0100)
@@ -490,7 +490,7 @@ func TestAdcImmediateWithOverflowFlag(t *testing.T) {
 func TestAdcZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x01, 0x65, 0x15, 0x00}
-	c.mem_write(0x15, 10)
+	c.MemWrite(0x15, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
 	assert_status(t, c.status, 0b0000_0100)
@@ -503,7 +503,7 @@ func TestAdcZeroPageX(t *testing.T) {
 	// This should fetch from memory location 0x8F
 	// and add the current value of a register to it (0x01)
 	vec := []uint8{0xa9, 0x01, 0xa2, 0x0F, 0x75, 0x80, 0x00}
-	c.mem_write(0x8F, 10)
+	c.MemWrite(0x8F, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
 	assert_status(t, c.status, 0b0000_0100)
@@ -516,7 +516,7 @@ func TestAdcAbsolute(t *testing.T) {
 	// This should fetch from memory location 0x8010
 	// and add the current value of a register to it (0x01)
 	vec := []uint8{0xa9, 0x01, 0x6D, 0x10, 0x80, 0x00}
-	c.mem_write(0x8010, 10)
+	c.MemWrite(0x8010, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
 }
@@ -528,7 +528,7 @@ func TestAdcAbsoluteX(t *testing.T) {
 	// This should fetch from memory location 0x2092
 	// and add the current value of a register to it (0x01)
 	vec := []uint8{0xa9, 0x01, 0xa2, 0x92, 0x7D, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 10)
+	c.MemWrite(0x2092, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
 }
@@ -540,7 +540,7 @@ func TestAdcAbsoluteY(t *testing.T) {
 	// This should fetch from memory location 0x2092
 	// and add the current value of a register to it (0x01)
 	vec := []uint8{0xa9, 0x01, 0xa0, 0x92, 0x79, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 10)
+	c.MemWrite(0x2092, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
 	assert_status(t, c.status, 0b0000_0100)
@@ -549,8 +549,8 @@ func TestAdcAbsoluteY(t *testing.T) {
 func TestAdcIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x01, 0xa2, 0x04, 0x61, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
@@ -560,8 +560,8 @@ func TestAdcIndirectX(t *testing.T) {
 func TestAdcIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa9, 0x01, 0xa0, 0x04, 0x71, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 10)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 11)
@@ -596,7 +596,7 @@ func TestANDImmediateWhenBit7Set(t *testing.T) {
 func TestANDZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0x25, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b1000_0001)
+	c.MemWrite(0xF8, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
 	assert_status(t, c.status, 0b0000_0100)
@@ -607,7 +607,7 @@ func TestANDZeroPageX(t *testing.T) {
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xA9, 0b0000_0011, 0xA2, 0x0F, 0x35, 0x80, 0x00}
-	c.mem_write(0x8F, 0b1000_0001)
+	c.MemWrite(0x8F, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
 	assert_status(t, c.status, 0b0000_0100)
@@ -616,7 +616,7 @@ func TestANDZeroPageX(t *testing.T) {
 func TestANDAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0x2D, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b1000_0001)
+	c.MemWrite(0x9005, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
 	assert_status(t, c.status, 0b0000_0100)
@@ -625,7 +625,7 @@ func TestANDAbsolute(t *testing.T) {
 func TestANDAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0xa2, 0x92, 0x3D, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b1000_0001)
+	c.MemWrite(0x2092, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
 	assert_status(t, c.status, 0b0000_0100)
@@ -634,7 +634,7 @@ func TestANDAbsoluteX(t *testing.T) {
 func TestANDAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0xA0, 0x92, 0x39, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b1000_0001)
+	c.MemWrite(0x2092, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
 	assert_status(t, c.status, 0b0000_0100)
@@ -643,8 +643,8 @@ func TestANDAbsoluteY(t *testing.T) {
 func TestANDIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0xa2, 0x04, 0x21, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
@@ -654,8 +654,8 @@ func TestANDIndirectX(t *testing.T) {
 func TestANDIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0011, 0xa0, 0x04, 0x31, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b1000_0001)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0001)
@@ -674,36 +674,36 @@ func TestASLAccumulator(t *testing.T) {
 func TestASLZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x06, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0011)
+	c.MemWrite(0xF8, 0b0000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_0110)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestASLZeroPageX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x16, 0xF8, 0x00}
-	c.mem_write(0xFA, 0b0000_0011)
+	c.MemWrite(0xFA, 0b0000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xFA), 0b0000_0110)
+	assert_register(t, c.MemRead(0xFA), 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestASLAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x0E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0011)
+	c.MemWrite(0x9005, 0b0000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), 0b0000_0110)
+	assert_register(t, c.MemRead(0x9005), 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestASLAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x1E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9007, 0b0000_0011)
+	c.MemWrite(0x9007, 0b0000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9007), 0b0000_0110)
+	assert_register(t, c.MemRead(0x9007), 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -726,18 +726,18 @@ func TestASLAccumulatorClearCarry(t *testing.T) {
 func TestASLZeroPageSetsCarry(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x06, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b1000_0011)
+	c.MemWrite(0xF8, 0b1000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_0110)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0101)
 }
 
 func TestASLZeroPageClearCarry(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x06, 0xF8, 0x06, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b1000_0011)
+	c.MemWrite(0xF8, 0b1000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_1100)
+	assert_register(t, c.MemRead(0xF8), 0b0000_1100)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -823,7 +823,7 @@ func TestBEQWithCarryFlag(t *testing.T) {
 func TestBITZeroPageAllStatusZero(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0010, 0x24, 0x10, 0x00}
-	c.mem_write(0x10, 0b0000_0010)
+	c.MemWrite(0x10, 0b0000_0010)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0100)
 }
@@ -831,7 +831,7 @@ func TestBITZeroPageAllStatusZero(t *testing.T) {
 func TestBITZeroPageZeroFlagSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0010, 0x24, 0x10, 0x00}
-	c.mem_write(0x10, 0b0000_0000)
+	c.MemWrite(0x10, 0b0000_0000)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0110)
 }
@@ -839,7 +839,7 @@ func TestBITZeroPageZeroFlagSet(t *testing.T) {
 func TestBITZeroPageOverflowSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x24, 0x10, 0x00}
-	c.mem_write(0x10, 0b0100_0000)
+	c.MemWrite(0x10, 0b0100_0000)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0100_0110)
 }
@@ -847,7 +847,7 @@ func TestBITZeroPageOverflowSet(t *testing.T) {
 func TestBITZeroPageNegativeSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x24, 0x10, 0x00}
-	c.mem_write(0x10, 0b1000_0000)
+	c.MemWrite(0x10, 0b1000_0000)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0110)
 }
@@ -855,7 +855,7 @@ func TestBITZeroPageNegativeSet(t *testing.T) {
 func TestBITAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0010, 0x2C, 0x10, 0x80, 0x00}
-	c.mem_write(0x8010, 0b0000_0010)
+	c.MemWrite(0x8010, 0b0000_0010)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0100)
 }
@@ -1077,7 +1077,7 @@ func TestCMPImmediateWhen7BitSet(t *testing.T) {
 func TestCMPZeroPageWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0x09, 0xC5, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x05)
+	c.MemWrite(0xF8, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1085,7 +1085,7 @@ func TestCMPZeroPageWhenAGreaterThanM(t *testing.T) {
 func TestCMPZeroPageWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0x09, 0xC5, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x09)
+	c.MemWrite(0xF8, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1093,7 +1093,7 @@ func TestCMPZeroPageWhenAEqualM(t *testing.T) {
 func TestCMPZeroPageWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0xFF, 0xC5, 0xF8, 0x00}
-	c.mem_write(0xF8, 0xFF)
+	c.MemWrite(0xF8, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1101,7 +1101,7 @@ func TestCMPZeroPageWhen7BitSet(t *testing.T) {
 func TestCMPZeroPageXWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xD5, 0xF8, 0x00}
-	c.mem_write(0xF9, 0x05)
+	c.MemWrite(0xF9, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1109,7 +1109,7 @@ func TestCMPZeroPageXWhenAGreaterThanM(t *testing.T) {
 func TestCMPZeroPageXWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xD5, 0xF8, 0x00}
-	c.mem_write(0xF9, 0x09)
+	c.MemWrite(0xF9, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1117,7 +1117,7 @@ func TestCMPZeroPageXWhenAEqualM(t *testing.T) {
 func TestCMPZeroPageXWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x01, 0xA9, 0xFF, 0xD5, 0xF8, 0x00}
-	c.mem_write(0xF9, 0xFF)
+	c.MemWrite(0xF9, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1125,7 +1125,7 @@ func TestCMPZeroPageXWhen7BitSet(t *testing.T) {
 func TestCMPAbsoluteWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0x09, 0xCD, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0x05)
+	c.MemWrite(0x8050, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1133,7 +1133,7 @@ func TestCMPAbsoluteWhenAGreaterThanM(t *testing.T) {
 func TestCMPAbsoluteWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0x09, 0xCD, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0x09)
+	c.MemWrite(0x8050, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1141,7 +1141,7 @@ func TestCMPAbsoluteWhenAEqualM(t *testing.T) {
 func TestCMPAbsoluteWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0xFF, 0xCD, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0xFF)
+	c.MemWrite(0x8050, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1149,7 +1149,7 @@ func TestCMPAbsoluteWhen7BitSet(t *testing.T) {
 func TestCMPAbsoluteXWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xDD, 0x50, 0x80, 0x00}
-	c.mem_write(0x8051, 0x05)
+	c.MemWrite(0x8051, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1157,7 +1157,7 @@ func TestCMPAbsoluteXWhenAGreaterThanM(t *testing.T) {
 func TestCMPAbsoluteXWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x01, 0xA9, 0x09, 0xDD, 0x50, 0x80, 0x00}
-	c.mem_write(0x8051, 0x09)
+	c.MemWrite(0x8051, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1165,7 +1165,7 @@ func TestCMPAbsoluteXWhenAEqualM(t *testing.T) {
 func TestCMPAbsoluteXWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x01, 0xA9, 0xFF, 0xDD, 0x50, 0x80, 0x00}
-	c.mem_write(0x8051, 0xFF)
+	c.MemWrite(0x8051, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1173,7 +1173,7 @@ func TestCMPAbsoluteXWhen7BitSet(t *testing.T) {
 func TestCMPAbsoluteYWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x01, 0xA9, 0x09, 0xD9, 0x50, 0x80, 0x00}
-	c.mem_write(0x8051, 0x05)
+	c.MemWrite(0x8051, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1181,7 +1181,7 @@ func TestCMPAbsoluteYWhenAGreaterThanM(t *testing.T) {
 func TestCMPAbsoluteYWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x01, 0xA9, 0x09, 0xD9, 0x50, 0x80, 0x00}
-	c.mem_write(0x8051, 0x09)
+	c.MemWrite(0x8051, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1189,7 +1189,7 @@ func TestCMPAbsoluteYWhenAEqualM(t *testing.T) {
 func TestCMPAbsoluteYWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x01, 0xA9, 0xFF, 0xD9, 0x50, 0x80, 0x00}
-	c.mem_write(0x8051, 0xFF)
+	c.MemWrite(0x8051, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1197,8 +1197,8 @@ func TestCMPAbsoluteYWhen7BitSet(t *testing.T) {
 func TestCMPIndirectXWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x04, 0xA9, 0x09, 0xC1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
@@ -1207,8 +1207,8 @@ func TestCMPIndirectXWhenAGreaterThanM(t *testing.T) {
 func TestCMPIndirectXWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x04, 0xA9, 0x09, 0xC1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
@@ -1217,8 +1217,8 @@ func TestCMPIndirectXWhenAEqualM(t *testing.T) {
 func TestCMPIndirectXWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xa2, 0x04, 0xA9, 0xFF, 0xC1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
@@ -1227,8 +1227,8 @@ func TestCMPIndirectXWhen7BitSet(t *testing.T) {
 func TestCMPIndirectYWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x04, 0xA9, 0x09, 0xD1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
@@ -1237,8 +1237,8 @@ func TestCMPIndirectYWhenAGreaterThanM(t *testing.T) {
 func TestCMPIndirectYWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x04, 0xA9, 0x09, 0xD1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
@@ -1247,8 +1247,8 @@ func TestCMPIndirectYWhenAEqualM(t *testing.T) {
 func TestCMPIndirectYWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x04, 0xA9, 0xFF, 0xD1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
@@ -1279,7 +1279,7 @@ func TestCPXImmediateWhen7BitSet(t *testing.T) {
 func TestCPXZeroPageWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x09, 0xE4, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x05)
+	c.MemWrite(0xF8, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1287,7 +1287,7 @@ func TestCPXZeroPageWhenAGreaterThanM(t *testing.T) {
 func TestCPXZeroPageWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x09, 0xE4, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x09)
+	c.MemWrite(0xF8, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1295,7 +1295,7 @@ func TestCPXZeroPageWhenAEqualM(t *testing.T) {
 func TestCPXZeroPageWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0xFF, 0xE4, 0xF8, 0x00}
-	c.mem_write(0xF8, 0xFF)
+	c.MemWrite(0xF8, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1303,7 +1303,7 @@ func TestCPXZeroPageWhen7BitSet(t *testing.T) {
 func TestCPXAbsoluteWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x09, 0xEC, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0x05)
+	c.MemWrite(0x8050, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1311,7 +1311,7 @@ func TestCPXAbsoluteWhenAGreaterThanM(t *testing.T) {
 func TestCPXAbsoluteWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x09, 0xEC, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0x09)
+	c.MemWrite(0x8050, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1319,7 +1319,7 @@ func TestCPXAbsoluteWhenAEqualM(t *testing.T) {
 func TestCPXAbsoluteWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0xFF, 0xEC, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0xFF)
+	c.MemWrite(0x8050, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1349,7 +1349,7 @@ func TestCPYImmediateWhen7BitSet(t *testing.T) {
 func TestCPYZeroPageWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x09, 0xC4, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x05)
+	c.MemWrite(0xF8, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1357,7 +1357,7 @@ func TestCPYZeroPageWhenAGreaterThanM(t *testing.T) {
 func TestCPYZeroPageWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x09, 0xC4, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x09)
+	c.MemWrite(0xF8, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1365,7 +1365,7 @@ func TestCPYZeroPageWhenAEqualM(t *testing.T) {
 func TestCPYZeroPageWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0xFF, 0xC4, 0xF8, 0x00}
-	c.mem_write(0xF8, 0xFF)
+	c.MemWrite(0xF8, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1373,7 +1373,7 @@ func TestCPYZeroPageWhen7BitSet(t *testing.T) {
 func TestCPYAbsoluteWhenAGreaterThanM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x09, 0xCC, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0x05)
+	c.MemWrite(0x8050, 0x05)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0101)
 }
@@ -1381,7 +1381,7 @@ func TestCPYAbsoluteWhenAGreaterThanM(t *testing.T) {
 func TestCPYAbsoluteWhenAEqualM(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0x09, 0xCC, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0x09)
+	c.MemWrite(0x8050, 0x09)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0111)
 }
@@ -1389,7 +1389,7 @@ func TestCPYAbsoluteWhenAEqualM(t *testing.T) {
 func TestCPYAbsoluteWhen7BitSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA0, 0xFF, 0xCC, 0x50, 0x80, 0x00}
-	c.mem_write(0x8050, 0xFF)
+	c.MemWrite(0x8050, 0xFF)
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b1000_0111)
 }
@@ -1398,36 +1398,36 @@ func TestCPYAbsoluteWhen7BitSet(t *testing.T) {
 func TestDECZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xC6, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x02)
+	c.MemWrite(0xF8, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0x01)
+	assert_register(t, c.MemRead(0xF8), 0x01)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestDECZeroPageX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x01, 0xD6, 0xF8, 0x00}
-	c.mem_write(0xF9, 0x02)
+	c.MemWrite(0xF9, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF9), 0x01)
+	assert_register(t, c.MemRead(0xF9), 0x01)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestDECZeroAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xCE, 0x05, 0x80, 0x00}
-	c.mem_write(0x8005, 0x02)
+	c.MemWrite(0x8005, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8005), 0x01)
+	assert_register(t, c.MemRead(0x8005), 0x01)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestDECZeroAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x01, 0xDE, 0x05, 0x80, 0x00}
-	c.mem_write(0x8006, 0x02)
+	c.MemWrite(0x8006, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8006), 0x01)
+	assert_register(t, c.MemRead(0x8006), 0x01)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1477,7 +1477,7 @@ func TestEORImmediateWhenBit7Set(t *testing.T) {
 func TestEORZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0x45, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0011)
+	c.MemWrite(0xF8, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1488,7 +1488,7 @@ func TestEORZeroPageX(t *testing.T) {
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xA9, 0b0000_0101, 0xA2, 0x0F, 0x55, 0x80, 0x00}
-	c.mem_write(0x8F, 0b0000_0011)
+	c.MemWrite(0x8F, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1497,7 +1497,7 @@ func TestEORZeroPageX(t *testing.T) {
 func TestEORAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0x4D, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0011)
+	c.MemWrite(0x9005, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1506,7 +1506,7 @@ func TestEORAbsolute(t *testing.T) {
 func TestEORAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x92, 0x5D, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b0000_0011)
+	c.MemWrite(0x2092, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1515,7 +1515,7 @@ func TestEORAbsoluteX(t *testing.T) {
 func TestEORAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x92, 0x59, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b0000_0011)
+	c.MemWrite(0x2092, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1524,8 +1524,8 @@ func TestEORAbsoluteY(t *testing.T) {
 func TestEORIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0x41, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
@@ -1535,8 +1535,8 @@ func TestEORIndirectX(t *testing.T) {
 func TestEORIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0x51, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0110)
@@ -1547,36 +1547,36 @@ func TestEORIndirectY(t *testing.T) {
 func TestINCZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xE6, 0xF8, 0x00}
-	c.mem_write(0xF8, 0x02)
+	c.MemWrite(0xF8, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0x03)
+	assert_register(t, c.MemRead(0xF8), 0x03)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestINCZeroPageX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x01, 0xF6, 0xF8, 0x00}
-	c.mem_write(0xF9, 0x02)
+	c.MemWrite(0xF9, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF9), 0x03)
+	assert_register(t, c.MemRead(0xF9), 0x03)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestINCAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xEE, 0x05, 0x80, 0x00}
-	c.mem_write(0x8005, 0x02)
+	c.MemWrite(0x8005, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8005), 0x03)
+	assert_register(t, c.MemRead(0x8005), 0x03)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestINCAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x01, 0xFE, 0x05, 0x80, 0x00}
-	c.mem_write(0x8006, 0x02)
+	c.MemWrite(0x8006, 0x02)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8006), 0x03)
+	assert_register(t, c.MemRead(0x8006), 0x03)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1584,8 +1584,8 @@ func TestINCAbsoluteX(t *testing.T) {
 func TestJMPAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x4C, 0x01, 0xFF, 0x00}
-	c.mem_write(0xFF01, 0xA2)
-	c.mem_write(0xFF02, 0x09)
+	c.MemWrite(0xFF01, 0xA2)
+	c.MemWrite(0xFF02, 0x09)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 0x09)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1595,8 +1595,8 @@ func TestJMPIndirect(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x6C, 0x01, 0xFF, 0x00}
 	c.mem_write_16(0xFF01, 0xFF10)
-	c.mem_write(0xFF10, 0xA2)
-	c.mem_write(0xFF11, 0x09)
+	c.MemWrite(0xFF10, 0xA2)
+	c.MemWrite(0xFF11, 0x09)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_x, 0x09)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1614,36 +1614,36 @@ func TestLSRAccumulator(t *testing.T) {
 func TestLSRZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x46, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0110)
+	c.MemWrite(0xF8, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_0011)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestLSRZeroPageX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x56, 0xF8, 0x00}
-	c.mem_write(0xFA, 0b0000_0110)
+	c.MemWrite(0xFA, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xFA), 0b0000_0011)
+	assert_register(t, c.MemRead(0xFA), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestLSRAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x4E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0110)
+	c.MemWrite(0x9005, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), 0b0000_0011)
+	assert_register(t, c.MemRead(0x9005), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestLSRAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x5E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9007, 0b0000_0110)
+	c.MemWrite(0x9007, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9007), 0b0000_0011)
+	assert_register(t, c.MemRead(0x9007), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1666,18 +1666,18 @@ func TestLSRAccumulatorClearCarry(t *testing.T) {
 func TestLSRZeroPageSetsCarry(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x46, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0011)
+	c.MemWrite(0xF8, 0b0000_0011)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_0001)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0001)
 	assert_status(t, c.status, 0b0000_0101)
 }
 
 func TestLSRZeroPageClearCarry(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x46, 0xF8, 0x46, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_1100)
+	c.MemWrite(0xF8, 0b0000_1100)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_0011)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1718,7 +1718,7 @@ func TestORAImmediateWhenBit7Set(t *testing.T) {
 func TestORAZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0x05, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0011)
+	c.MemWrite(0xF8, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1729,7 +1729,7 @@ func TestORAZeroPageX(t *testing.T) {
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xA9, 0b0000_0101, 0xA2, 0x0F, 0x15, 0x80, 0x00}
-	c.mem_write(0x8F, 0b0000_0011)
+	c.MemWrite(0x8F, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1738,7 +1738,7 @@ func TestORAZeroPageX(t *testing.T) {
 func TestORAAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0x0D, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0011)
+	c.MemWrite(0x9005, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1747,7 +1747,7 @@ func TestORAAbsolute(t *testing.T) {
 func TestORAAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x92, 0x1D, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b0000_0011)
+	c.MemWrite(0x2092, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1756,7 +1756,7 @@ func TestORAAbsoluteX(t *testing.T) {
 func TestORAAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x92, 0x19, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b0000_0011)
+	c.MemWrite(0x2092, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
@@ -1765,8 +1765,8 @@ func TestORAAbsoluteY(t *testing.T) {
 func TestORAIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0x01, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
@@ -1776,8 +1776,8 @@ func TestORAIndirectX(t *testing.T) {
 func TestORAIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0x11, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b0000_0011)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0b0000_0111)
@@ -1796,36 +1796,36 @@ func TestROLAccumulator(t *testing.T) {
 func TestROLZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x26, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0110)
+	c.MemWrite(0xF8, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_1100)
+	assert_register(t, c.MemRead(0xF8), 0b0000_1100)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestROLZeroPageX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x36, 0xF8, 0x00}
-	c.mem_write(0xFA, 0b0000_0110)
+	c.MemWrite(0xFA, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xFA), 0b0000_1100)
+	assert_register(t, c.MemRead(0xFA), 0b0000_1100)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestROLAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x2E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0110)
+	c.MemWrite(0x9005, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), 0b0000_1100)
+	assert_register(t, c.MemRead(0x9005), 0b0000_1100)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestROLAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x3E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9007, 0b0000_0110)
+	c.MemWrite(0x9007, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9007), 0b0000_1100)
+	assert_register(t, c.MemRead(0x9007), 0b0000_1100)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1843,12 +1843,12 @@ func TestROLAccumulatorWhenCarrySet(t *testing.T) {
 func TestROLZeroPageWhenCarrySet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x26, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0110)
+	c.MemWrite(0xF8, 0b0000_0110)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
 	c.Run()
-	assert_register(t, c.mem_read(0xF8), 0b0000_1101)
+	assert_register(t, c.MemRead(0xF8), 0b0000_1101)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1864,36 +1864,36 @@ func TestRORAccumulator(t *testing.T) {
 func TestRORZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x66, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0110)
+	c.MemWrite(0xF8, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), 0b0000_0011)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestRORZeroPageX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x76, 0xF8, 0x00}
-	c.mem_write(0xFA, 0b0000_0110)
+	c.MemWrite(0xFA, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xFA), 0b0000_0011)
+	assert_register(t, c.MemRead(0xFA), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestRORAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x6E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0110)
+	c.MemWrite(0x9005, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), 0b0000_0011)
+	assert_register(t, c.MemRead(0x9005), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestRORAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA2, 0x02, 0x7E, 0x05, 0x90, 0x00}
-	c.mem_write(0x9007, 0b0000_0110)
+	c.MemWrite(0x9007, 0b0000_0110)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9007), 0b0000_0011)
+	assert_register(t, c.MemRead(0x9007), 0b0000_0011)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1911,12 +1911,12 @@ func TestRORAccumulatorWhenCarrySet(t *testing.T) {
 func TestRORZeroPageWhenCarrySet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x66, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_1100)
+	c.MemWrite(0xF8, 0b0000_1100)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
 	c.Run()
-	assert_register(t, c.mem_read(0xF8), 0b0000_0111)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -1979,7 +1979,7 @@ func TestSBCImmediateWhen0(t *testing.T) {
 func TestSBCZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xE5, 0xF8, 0x00}
-	c.mem_write(0xF8, 0b0000_0001)
+	c.MemWrite(0xF8, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
@@ -1993,7 +1993,7 @@ func TestSBCZeroPageX(t *testing.T) {
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xA9, 0b0000_0101, 0xA2, 0x0F, 0xF5, 0x80, 0x00}
-	c.mem_write(0x8F, 0b0000_0001)
+	c.MemWrite(0x8F, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
@@ -2005,7 +2005,7 @@ func TestSBCZeroPageX(t *testing.T) {
 func TestSBCAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xED, 0x05, 0x90, 0x00}
-	c.mem_write(0x9005, 0b0000_0001)
+	c.MemWrite(0x9005, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
@@ -2017,7 +2017,7 @@ func TestSBCAbsolute(t *testing.T) {
 func TestSBCAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x92, 0xFD, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b0000_0001)
+	c.MemWrite(0x2092, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
@@ -2029,7 +2029,7 @@ func TestSBCAbsoluteX(t *testing.T) {
 func TestSBCAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x92, 0xF9, 0x00, 0x20, 0x00}
-	c.mem_write(0x2092, 0b0000_0001)
+	c.MemWrite(0x2092, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
 	c.status = 0b0000_0001
@@ -2041,8 +2041,8 @@ func TestSBCAbsoluteY(t *testing.T) {
 func TestSBCIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0xE1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
@@ -2055,8 +2055,8 @@ func TestSBCIndirectX(t *testing.T) {
 func TestSBCIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0xF1, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.mem_write_16(0x8010, 0b0000_0001)
 	c.Load(vec)
 	c.Reset()
@@ -2170,7 +2170,7 @@ func TestSTAZeroPage(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0111, 0x85, 0xF8, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), c.register_a)
+	assert_register(t, c.MemRead(0xF8), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2180,7 +2180,7 @@ func TestSTAZeroPageX(t *testing.T) {
 	// This should fetch from memory location 0x8F
 	vec := []uint8{0xA9, 0b0000_0111, 0xA2, 0x0F, 0x95, 0x80, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8F), c.register_a)
+	assert_register(t, c.MemRead(0x8F), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2188,7 +2188,7 @@ func TestSTAAbsolute(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0x8D, 0x05, 0x90, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), c.register_a)
+	assert_register(t, c.MemRead(0x9005), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2196,7 +2196,7 @@ func TestSTAAbsoluteX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x02, 0x9D, 0x00, 0x20, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x2002), c.register_a)
+	assert_register(t, c.MemRead(0x2002), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2204,36 +2204,36 @@ func TestSTAAbsoluteY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xA0, 0x02, 0x99, 0x00, 0x20, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x2002), c.register_a)
+	assert_register(t, c.MemRead(0x2002), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestSTAIndirectX(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa2, 0x04, 0x81, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8010), c.register_a)
+	assert_register(t, c.MemRead(0x8010), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestSTAIndirectY(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xA9, 0b0000_0101, 0xa0, 0x04, 0x91, 0x20, 0x00}
-	c.mem_write(0x24, 0x10)
-	c.mem_write(0x25, 0x80)
+	c.MemWrite(0x24, 0x10)
+	c.MemWrite(0x25, 0x80)
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8010), c.register_a)
+	assert_register(t, c.MemRead(0x8010), c.register_a)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 // STX
 func TestSTXZeroPage(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xA9, 0b0000_0111, 0x86, 0xF8, 0x00}
+	vec := []uint8{0xA2, 0b0000_0111, 0x86, 0xF8, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), c.register_x)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2241,26 +2241,26 @@ func TestSTXZeroPageY(t *testing.T) {
 	c := InitCPU()
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
-	vec := []uint8{0xA9, 0b0000_0111, 0xA0, 0x0F, 0x96, 0x80, 0x00}
+	vec := []uint8{0xA2, 0b0000_0111, 0xA0, 0x0F, 0x96, 0x80, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8F), c.register_x)
+	assert_register(t, c.MemRead(0x8F), 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestSTXAbsolute(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xA9, 0b0000_0101, 0x8E, 0x05, 0x90, 0x00}
+	vec := []uint8{0xA2, 0b0000_0101, 0x8E, 0x05, 0x90, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), c.register_x)
+	assert_register(t, c.MemRead(0x9005), 0b0000_0101)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 // STY
 func TestSTYZeroPage(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xA9, 0b0000_0111, 0x86, 0xF8, 0x00}
+	vec := []uint8{0xA0, 0b0000_0111, 0x84, 0xF8, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0xF8), c.register_y)
+	assert_register(t, c.MemRead(0xF8), 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2268,17 +2268,17 @@ func TestSTYZeroPageX(t *testing.T) {
 	c := InitCPU()
 	// Sets x register to 0x0F and A to 0x80
 	// This should fetch from memory location 0x8F
-	vec := []uint8{0xA9, 0b0000_0111, 0xA2, 0x0F, 0x96, 0x80, 0x00}
+	vec := []uint8{0xA0, 0b0000_0111, 0xA2, 0x0F, 0x94, 0x80, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x8F), c.register_y)
+	assert_register(t, c.MemRead(0x8F), 0b0000_0111)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 func TestSTYAbsolute(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xA9, 0b0000_0101, 0x8E, 0x05, 0x90, 0x00}
+	vec := []uint8{0xA0, 0b0000_0101, 0x8C, 0x05, 0x90, 0x00}
 	c.LoadAndRun(vec)
-	assert_register(t, c.mem_read(0x9005), c.register_y)
+	assert_register(t, c.MemRead(0x9005), c.register_y)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
@@ -2298,8 +2298,8 @@ func TestJSRStackDecrement(t *testing.T) {
 func TestJSRLDA(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x20, 0x01, 0x82, 0x00}
-	c.mem_write(0x8201, 0xA9)
-	c.mem_write(0x8202, 0x09)
+	c.MemWrite(0x8201, 0xA9)
+	c.MemWrite(0x8202, 0x09)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0x09)
 }
@@ -2354,9 +2354,9 @@ func TestPLP(t *testing.T) {
 func TestRTS(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x20, 0x01, 0x82, 0xA2, 0x09, 0x00}
-	c.mem_write(0x8201, 0xA9)
-	c.mem_write(0x8202, 0x12)
-	c.mem_write(0x8203, 0x60)
+	c.MemWrite(0x8201, 0xA9)
+	c.MemWrite(0x8202, 0x12)
+	c.MemWrite(0x8203, 0x60)
 	c.LoadAndRun(vec)
 	assert_register(t, c.register_a, 0x12)
 	assert_register(t, c.register_x, 0x09)
@@ -2369,7 +2369,7 @@ func TestRTI(t *testing.T) {
 	vec := []uint8{0x40, 0x02}
 	c.Load(vec)
 	c.Reset()
-	c.mem_write(0x8005, 0x02)
+	c.MemWrite(0x8005, 0x02)
 	c.push_16(0x8005)
 	c.push(flag)
 	c.Run()
