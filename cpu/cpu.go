@@ -232,8 +232,9 @@ func (c *CPU) LoadAndRun(program []uint8) {
 
 func (c *CPU) Reset() {
 	c.register_a = 0
+	c.register_y = 0
 	c.register_x = 0
-	c.status = 0
+	c.status = 0b100100
 
 	c.program_counter = c.MemRead16(0xFFFC)
 	c.stack_pointer = STACK_RESET
@@ -285,6 +286,9 @@ func (c *CPU) GetNextOpCode() (OpCode, uint16) {
 	opcode := c.MemRead(c.program_counter)
 	if op, ok = OPTABLE[opcode]; !ok {
 		panic(fmt.Sprintf("No instr found for %x", opcode))
+	}
+	if op.mode == IMPLIED || op.mode == ACCUMULATOR {
+		return op, 0
 	}
 	// This is pretty hacked together and should be fixed
 	c.program_counter++
@@ -412,7 +416,11 @@ func (c *CPU) compute_overflow_bit(a, b, res uint8) {
 }
 
 func (c *CPU) copy_overflow_flag(v uint8) {
-	c.status |= v & 0b0100_0000
+	if (v & 0b0100_0000) > 0 {
+		c.status |= 0b0100_0000
+	} else {
+		c.status &= 0b1011_1111
+	}
 }
 
 func (c *CPU) do_compare(val, reg uint8) {
@@ -550,48 +558,53 @@ func (c *CPU) cli(op OpCode) {
 }
 
 func (c *CPU) bne(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
-	if !c.is_zero_set() {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
+	if c.is_zero_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) bmi(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
 	if c.is_negative_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) bvs(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
 	if !c.is_overflow_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) bpl(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
-	if !c.is_negative_set() {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
+	if c.is_negative_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) bvc(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
 	if c.is_overflow_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) bit(op OpCode) {
@@ -765,30 +778,33 @@ func (c *CPU) nop(op OpCode) {
 }
 
 func (c *CPU) bcc(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
 	if c.is_carry_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) bcs(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
 	if !c.is_carry_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) beq(op OpCode) {
-	rel := c.interpret_mode(op.mode, nil, true)
-	c.program_counter++
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
 	if !c.is_zero_set() {
+		c.program_counter++
 		return
 	}
-	c.program_counter += uint16(int16(int8(rel)))
+	c.program_counter = addr
 }
 
 func (c *CPU) adc(op OpCode) {
@@ -885,8 +901,11 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool) u
 	var incr_count uint16
 	next_val := c.MemRead(c.program_counter)
 	switch m {
-	case IMMEDIATE, RELATIVE:
+	case IMMEDIATE:
 		val = next_val
+	case RELATIVE:
+		val = next_val
+		addr = c.program_counter + uint16(int16(int8(val))) + 1
 	case ZEROPAGE:
 		addr = uint16(next_val)
 		val = c.MemRead(addr)

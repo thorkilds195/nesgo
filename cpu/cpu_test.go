@@ -25,6 +25,10 @@ func assert_status(t *testing.T, actual, expected uint8) {
 	idx := 0
 	var i uint8
 	for i = 0b0000_0001; idx < 8; i <<= 1 {
+		if FLAGNAMES[idx] == "No Flag" {
+			idx++
+			continue
+		}
 		if diff&i > 0 {
 			t.Errorf(`%s flag not set right`, FLAGNAMES[idx])
 		}
@@ -844,6 +848,17 @@ func TestBITZeroPageOverflowSet(t *testing.T) {
 	assert_status(t, c.status, 0b0100_0110)
 }
 
+func TestBITZeroPageOverflowNotSet(t *testing.T) {
+	c := InitCPU()
+	vec := []uint8{0x24, 0x10, 0x00}
+	c.MemWrite(0x10, 0b0000_0000)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0100_0110
+	c.Run()
+	assert_status(t, c.status, 0b0000_0110)
+}
+
 func TestBITZeroPageNegativeSet(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x24, 0x10, 0x00}
@@ -882,41 +897,47 @@ func TestBMIWithoutNegativeFlag(t *testing.T) {
 }
 
 //BNE
-func TestBNEWithoutZeroFlag(t *testing.T) {
+func TestBNEWithZeroFlag(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0xD0, 0x02, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
-	c.status = 0b0000_0000
+	c.status = 0b0000_0110
 	c.Run()
 	assert_register(t, c.register_x, 0x02)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
-func TestBNEWithZeroFlag(t *testing.T) {
+func TestBNEWithoutZeroFlag(t *testing.T) {
 	c := InitCPU()
-	vec := []uint8{0xa9, 0x00, 0xD0, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
-	c.LoadAndRun(vec)
+	vec := []uint8{0xD0, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b0000_0000
+	c.Run()
 	assert_register(t, c.register_a, 0x00)
 	assert_register(t, c.register_x, 0x02)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
 //BPL
-func TestBPLWithoutNegativeFlag(t *testing.T) {
+func TestBPLWithNegativeFlag(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x10, 0x02, 0xA2, 0x02, 0x00}
-	c.LoadAndRun(vec)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b1000_0000
+	c.Run()
 	assert_register(t, c.register_x, 0x02)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
-func TestBPLWithNegativeFlag(t *testing.T) {
+func TestBPLWithoutNegativeFlag(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x10, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
-	c.status = 0b1000_0000
+	c.status = 0b0000_0000
 	c.Run()
 	assert_register(t, c.register_a, 0x00)
 	assert_register(t, c.register_x, 0x02)
@@ -2321,7 +2342,7 @@ func TestPHP(t *testing.T) {
 	vec := []uint8{0xA9, 0x00, 0x08, 0x00}
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0110)
-	if !(c.MemRead16(0x0100+uint16(STACK_RESET)) == 0b0000_0010) {
+	if !(c.MemRead16(0x0100+uint16(STACK_RESET)) == 0b0010_0110) {
 		t.Error("Stack pointer return value is wrong")
 	}
 }

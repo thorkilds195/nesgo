@@ -142,10 +142,6 @@ func handle_user_input(c *cpu.CPU) {
 	}
 }
 
-func trace_cpu(c *cpu.CPU) string {
-	return fmt.Sprintf("%x", c.ProgramCounter())
-}
-
 func read_nes_test() []uint8 {
 	dat, err := os.ReadFile("./nestest.nes")
 	if err != nil {
@@ -168,7 +164,7 @@ func main() {
 	c.MemWrite16(0xFFFC, 0xC000)
 	c.Reset()
 	c.RunWithCallback(func() {
-		fmt.Println(trace_cpu(c))
+		fmt.Println(cpu.TraceCPU(c))
 	})
 
 }
