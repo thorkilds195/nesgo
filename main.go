@@ -5,13 +5,11 @@ import (
 	"image/color"
 	"math/rand"
 	"nesgo/cpu"
+	"os"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-
 	// "github.com/hajimehoshi/ebiten/v2/ebitenutil"
-
-	"log"
 )
 
 var game_code = []uint8{
@@ -144,12 +142,33 @@ func handle_user_input(c *cpu.CPU) {
 	}
 }
 
+func trace_cpu(c *cpu.CPU) string {
+	return fmt.Sprintf("%x", c.ProgramCounter())
+}
+
+func read_nes_test() []uint8 {
+	dat, err := os.ReadFile("./nestest.nes")
+	if err != nil {
+		panic(err) // or handle it properly
+	}
+	return dat
+}
+
 func main() {
-	game := NewGame()
+	/* game := NewGame()
 	ebiten.SetWindowSize(screenWidth*10, screenHeight*10) // Scale window
 	ebiten.SetWindowTitle("Emulator Test Window")
 
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
-	}
+	} */
+	test_data := read_nes_test()
+	c := cpu.InitCPU()
+	c.Load(test_data)
+	c.MemWrite16(0xFFFC, 0xC000)
+	c.Reset()
+	c.RunWithCallback(func() {
+		fmt.Println(trace_cpu(c))
+	})
+
 }
