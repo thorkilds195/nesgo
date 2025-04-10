@@ -876,21 +876,24 @@ func TestBITAbsolute(t *testing.T) {
 }
 
 //BMI
-func TestBMIWithNegativeFlag(t *testing.T) {
+func TestBMIWithoutNegativeFlag(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x30, 0x02, 0xA2, 0x02, 0x00}
 	c.Load(vec)
 	c.Reset()
-	c.status = 0b1000_0000
+	c.status = 0b0000_0000
 	c.Run()
 	assert_register(t, c.register_x, 0x02)
 	assert_status(t, c.status, 0b0000_0100)
 }
 
-func TestBMIWithoutNegativeFlag(t *testing.T) {
+func TestBMIWithNegativeFlag(t *testing.T) {
 	c := InitCPU()
 	vec := []uint8{0x30, 0x02, 0xa9, 0x05, 0xA2, 0x02, 0x00}
-	c.LoadAndRun(vec)
+	c.Load(vec)
+	c.Reset()
+	c.status = 0b1000_0000
+	c.Run()
 	assert_register(t, c.register_a, 0x00)
 	assert_register(t, c.register_x, 0x02)
 	assert_status(t, c.status, 0b0000_0100)
@@ -2342,7 +2345,7 @@ func TestPHP(t *testing.T) {
 	vec := []uint8{0xA9, 0x00, 0x08, 0x00}
 	c.LoadAndRun(vec)
 	assert_status(t, c.status, 0b0000_0110)
-	if !(c.MemRead16(0x0100+uint16(STACK_RESET)) == 0b0010_0110) {
+	if !(c.MemRead16(0x0100+uint16(STACK_RESET)) == 0b0011_0110) {
 		t.Error("Stack pointer return value is wrong")
 	}
 }

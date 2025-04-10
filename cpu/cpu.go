@@ -182,6 +182,8 @@ var OPTABLE = map[uint8]OpCode{
 	0x28: {0x28, "PLP", IMPLIED, 2, 2, (*CPU).plp},
 	0x40: {0x40, "RTI", IMPLIED, 2, 2, (*CPU).rti},
 	0x60: {0x60, "RTS", IMPLIED, 2, 2, (*CPU).rts},
+	0xBA: {0xBA, "TSX", IMPLIED, 2, 2, (*CPU).tsx},
+	0x9A: {0x9A, "TXS", IMPLIED, 2, 2, (*CPU).txs},
 	// Custom instruction to quit and leave emulator in current state
 	0x02: {0x02, "HLT", IMPLIED, 2, 2, (*CPU).hlt},
 }
@@ -405,10 +407,7 @@ func (c *CPU) clear_overflow_bit() {
 }
 
 func (c *CPU) compute_overflow_bit(a, b, res uint8) {
-	val_sign := (a & 0x80) != 0
-	reg_sign := (b & 0x80) != 0
-	res_sign := (res & 0x80) != 0
-	if (val_sign == reg_sign) && (val_sign != res_sign) {
+	if ((res ^ b) & (res ^ a) & 0x80) != 0 {
 		c.status |= 0b0100_0000
 	} else {
 		c.status &= 0b1011_1111
@@ -434,7 +433,7 @@ func (c *CPU) do_compare(val, reg uint8) {
 	} else {
 		c.set_zero_flag(1)
 	}
-	c.set_negative_flag(reg & val)
+	c.set_negative_flag(reg - val)
 }
 
 func (c *CPU) jmp(op OpCode) {
@@ -466,15 +465,20 @@ func (c *CPU) pla(op OpCode) {
 }
 
 func (c *CPU) plp(op OpCode) {
-	c.status = c.pull()
-	c.set_zero_and_negative_flag(c.register_a)
+	t_status := c.pull()
+	t_status &= 0b1110_1111
+	t_status |= 0b0010_0000
+	c.status = t_status
 }
 
 func (c *CPU) hlt(op OpCode) {
 }
 
 func (c *CPU) rti(op OpCode) {
-	c.status = c.pull()
+	t_status := c.pull()
+	t_status &= 0b1110_1111
+	t_status |= 0b0010_0000
+	c.status = t_status
 	lo := c.pull()
 	hi := c.pull()
 	c.program_counter = make_16_bit(hi, lo)
@@ -486,8 +490,18 @@ func (c *CPU) rts(op OpCode) {
 	c.program_counter = make_16_bit(hi, lo) + 1
 }
 
+func (c *CPU) tsx(op OpCode) {
+	c.register_x = c.stack_pointer
+	c.set_zero_and_negative_flag(c.register_x)
+}
+
+func (c *CPU) txs(op OpCode) {
+	c.stack_pointer = c.register_x
+}
+
 func (c *CPU) php(op OpCode) {
-	c.push(c.status)
+	push_status := c.status | 0b0011_0000
+	c.push(push_status)
 }
 
 func (c *CPU) sec(op OpCode) {
@@ -570,7 +584,7 @@ func (c *CPU) bne(op OpCode) {
 func (c *CPU) bmi(op OpCode) {
 	var addr uint16
 	c.interpret_mode(op.mode, &addr, true)
-	if c.is_negative_set() {
+	if !c.is_negative_set() {
 		c.program_counter++
 		return
 	}
@@ -659,7 +673,7 @@ func (c *CPU) sbc(op OpCode) {
 		c.clear_carry_bit()
 	}
 
-	c.compute_overflow_bit(old_a, val, result)
+	c.compute_overflow_bit(old_a, ^val, result)
 
 	c.set_zero_and_negative_flag(result)
 
@@ -808,11 +822,11 @@ func (c *CPU) beq(op OpCode) {
 }
 
 func (c *CPU) adc(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true)
-	val = c.add_carry_bit(val)
+	mem_val := c.interpret_mode(op.mode, nil, true)
+	val := c.add_carry_bit(mem_val)
 	result := val + c.register_a
 	c.decide_carry_bit(result, c.register_a)
-	c.compute_overflow_bit(val, c.register_a, result)
+	c.compute_overflow_bit(mem_val, c.register_a, result)
 	c.register_a = result
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
