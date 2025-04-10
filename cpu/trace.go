@@ -6,8 +6,13 @@ func TraceCPU(c *CPU) string {
 	var ret string
 	op_code, addr := c.GetNextOpCode()
 	switch op_code.mode {
-	case IMPLIED, ACCUMULATOR:
+	case IMPLIED:
 		ret = fmt.Sprintf("%02X  %02X        %s                             A:%02X X:%02X Y:%02X P:%02X SP:%02X",
+			c.ProgramCounter(), op_code.code, op_code.name,
+			c.GetRegisterA(), c.GetRegisterX(), c.GetRegisterY(), c.GetStatus(), c.GetStackPointer(),
+		)
+	case ACCUMULATOR:
+		ret = fmt.Sprintf("%02X  %02X        %s A                           A:%02X X:%02X Y:%02X P:%02X SP:%02X",
 			c.ProgramCounter(), op_code.code, op_code.name,
 			c.GetRegisterA(), c.GetRegisterX(), c.GetRegisterY(), c.GetStatus(), c.GetStackPointer(),
 		)

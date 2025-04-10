@@ -761,20 +761,22 @@ func (c *CPU) rol(op OpCode) {
 func (c *CPU) ror(op OpCode) {
 	var pre_val uint8
 	var val uint8
+	var carry_and uint8
+	if c.is_carry_set() {
+		carry_and = 0b1000_0000
+	}
 	if op.mode == ACCUMULATOR {
 		pre_val = c.register_a
 		val = c.register_a
 		val >>= 1
-		// Copy carry bit to bit 0
-		val = (c.status & 0b0000_0001) | (val & 0b0111_1111)
+		val = carry_and | (val & 0b0111_1111)
 		c.register_a = val
 	} else {
 		var addr uint16
 		val = c.interpret_mode(op.mode, &addr, true)
 		pre_val = val
 		val >>= 1
-		// Copy carry bit to bit 7
-		val = (c.status & 0b0000_0001) | (val & 0b0111_1111)
+		val = carry_and | (val & 0b0111_1111)
 		c.MemWrite(addr, val)
 		c.program_counter++
 	}
