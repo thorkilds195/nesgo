@@ -339,6 +339,11 @@ func (c *CPU) MemRead16(addr uint16) uint16 {
 	return make_16_bit(hi, lo)
 }
 
+func (c *CPU) mem_read_16_zero(addr uint8) uint16 {
+	lo := c.MemRead(uint16(addr))
+	hi := c.MemRead(uint16((addr + 1) & 0xFF))
+	return make_16_bit(hi, lo)
+}
 func (c *CPU) MemWrite16(addr uint16, v uint16) {
 	lo := uint8(v & 0xFF)
 	hi := uint8(v >> 8)
@@ -835,7 +840,6 @@ func (c *CPU) adc(op OpCode) {
 }
 
 func (c *CPU) lda(op OpCode) {
-
 	c.register_a = c.interpret_mode(op.mode, nil, true)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
@@ -947,25 +951,27 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool) u
 		val = c.MemRead(addr)
 	case INDIRECTX:
 		in := next_val + c.register_x
-		target := c.MemRead16(uint16(in))
-		incr_count++
+		target := c.mem_read_16_zero(in)
 		val = c.MemRead(target)
 		addr = target
-		incr_count++
 	case INDIRECTY:
-		in := next_val + c.register_y
-		target := c.MemRead16(uint16(in))
-		incr_count++
-		val = c.MemRead(target)
-		addr = target
-		incr_count++
+		target := c.mem_read_16_zero(next_val)
+		final_target := target + uint16(c.register_y)
+		val = c.MemRead(final_target)
+		addr = final_target
 	case INDIRECT:
-		in := c.MemRead16(c.program_counter)
-		target := c.MemRead16(in)
-		incr_count++
-		val = c.MemRead(target)
+		ptr := c.MemRead16(c.program_counter)
+		lo := c.MemRead(ptr)
+		var hi uint8
+		if ptr&0x00FF == 0x00FF {
+			// Bug: wrap within the same page
+			hi = c.MemRead(ptr & 0xFF00)
+		} else {
+			hi = c.MemRead(ptr + 1)
+		}
+		target := make_16_bit(hi, lo)
+		val = 0 // JMP does not load a value
 		addr = target
-		incr_count++
 	default:
 		panic("Unknown addresing mode")
 	}
