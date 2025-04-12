@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestBasicTraceAbsoluteInstr(t *testing.T) {
+func TestTraceAbsoluteInstr(t *testing.T) {
 	vec := []uint8{0x4C, 0xF5, 0xC5}
 	c := InitCPU()
 	c.Load(vec)
@@ -21,7 +21,19 @@ func TestBasicTraceAbsoluteInstr(t *testing.T) {
 	}
 }
 
-func TestBasicTraceImmediateInstr(t *testing.T) {
+func TestTraceAccumulatorInstr(t *testing.T) {
+	vec := []uint8{0x0A}
+	c := InitCPU()
+	c.Load(vec)
+	c.MemWrite16(0xFFFC, 0xC000)
+	c.Reset()
+	actual := TraceCPU(c)
+	expected := "C000  0A        ASL A                           A:00 X:00 Y:00 P:24 SP:FD"
+	if !(strings.EqualFold(actual, expected)) {
+		t.Errorf("TraceCPU not returning correct output\nGot:\n%s\nExpected:\n%s", actual, expected)
+	}
+}
+func TestTraceImmediateInstr(t *testing.T) {
 	vec := []uint8{0xA9, 0xF5}
 	c := InitCPU()
 	c.Load(vec)
@@ -33,7 +45,7 @@ func TestBasicTraceImmediateInstr(t *testing.T) {
 		t.Errorf("TraceCPU not returning correct output\nGot:\n%s\nExpected:\n%s", actual, expected)
 	}
 }
-func TestBasicTraceZeroPageInstr(t *testing.T) {
+func TestTraceZeroPageInstr(t *testing.T) {
 	vec := []uint8{0xA5, 0xF5}
 	c := InitCPU()
 	c.Load(vec)
