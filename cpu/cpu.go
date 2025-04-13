@@ -1,11 +1,13 @@
 package cpu
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type AddressingMode uint8
 
 const STACK_RESET uint8 = 0xFD
-const PROGRAM_START uint16 = 0xC000
+const PROGRAM_START uint16 = 0x0600
 
 const (
 	IMMEDIATE AddressingMode = iota
@@ -274,6 +276,7 @@ func (c *CPU) Step(f_call func()) bool {
 	opcode := c.MemRead(c.program_counter)
 	c.program_counter++
 	op, ok := OPTABLE[opcode]
+	//fmt.Println(op.name, op.mode)
 	if !ok {
 		panic(fmt.Sprintf("Unknown opcode: %x", opcode))
 	}

@@ -1,15 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"image/color"
+	"log"
 	"math/rand"
 	"nesgo/cpu"
-	"os"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	// "github.com/hajimehoshi/ebiten/v2/ebitenutil"
+)
+
+const (
+	screenWidth  = 32
+	screenHeight = 32
 )
 
 var game_code = []uint8{
@@ -35,136 +37,131 @@ var game_code = []uint8{
 	0xea, 0xca, 0xd0, 0xfb, 0x60,
 }
 
-const (
-	screenWidth  = 32
-	screenHeight = 32
-)
-
-type Game struct {
-	framebuffer []byte
-	texture     *ebiten.Image
-	cpu         *cpu.CPU
-}
-
-func color_from_byte(b uint8) color.RGBA {
-	var col color.RGBA
+func colorFromByte(b uint8) (r, g, b2 byte) {
 	switch b {
 	case 0:
-		col = color.RGBA{0, 0, 0, 0xFF}
+		return 0x00, 0x00, 0x00
 	case 1:
-		col = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}
+		return 0xFF, 0xFF, 0xFF
+	case 2, 9:
+		return 0x80, 0x80, 0x80
+	case 3, 10:
+		return 0xFF, 0x00, 0x00
+	case 4, 11:
+		return 0x00, 0xFF, 0x00
+	case 5, 12:
+		return 0x00, 0x00, 0xFF
+	case 6, 13:
+		return 0xFF, 0x00, 0xFF
+	case 7, 14:
+		return 0xFF, 0xFF, 0x00
 	default:
-		col = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}
-
+		return 0x00, 0xFF, 0xFF
 	}
-	return col
 }
 
-func read_screen_state(c *cpu.CPU, g *Game) bool {
+func readScreenState(c *cpu.CPU, g *Emulator) bool {
 	idx := 0
 	update := false
 	buf := g.framebuffer
 	for i := 0x0200; i < 0x0600; i++ {
 		color_idx := c.MemRead(uint16(i))
-		col := color_from_byte(color_idx)
-		if buf[idx] != col.R || buf[idx+1] != col.G || buf[idx+2] != col.B {
-			buf[idx] = col.R
-			buf[idx+1] = col.G
-			buf[idx+2] = col.B
+		r, g, b := colorFromByte(color_idx)
+		if buf[idx] != r || buf[idx+1] != g || buf[idx+2] != b {
+			buf[idx] = r
+			buf[idx+1] = g
+			buf[idx+2] = b
 			buf[idx+3] = 0xFF
 			update = true
-		}
-		if color_idx != 0 {
-			fmt.Printf("Memory[%04X] = %d\n", i, color_idx)
 		}
 		idx += 4
 	}
 	return update
 }
 
-func NewGame() *Game {
-	fb := make([]byte, screenWidth*screenHeight*4) // 4 bytes per pixel (RGBA)
-	img := ebiten.NewImage(screenWidth, screenHeight)
-	c := cpu.InitCPU()
-	c.Load(game_code)
-	c.Reset()
-	return &Game{framebuffer: fb, texture: img, cpu: c}
+func handleUserInput(cpu *cpu.CPU) {
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
+		cpu.MemWrite(0xFF, 0x77)
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyS) {
+		cpu.MemWrite(0xFF, 0x73)
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
+		cpu.MemWrite(0xFF, 0x61)
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyD) {
+		cpu.MemWrite(0xFF, 0x64)
+	}
 }
 
-func (g *Game) Update() error {
-	// Handle user input first
-	handle_user_input(g.cpu)
+type Emulator struct {
+	framebuffer []byte
+	cpu         *cpu.CPU
+	texture     *ebiten.Image
+}
 
-	// Step one instruction of the CPU, with a callback
-	alive := g.cpu.Step(func() {
-		g.cpu.MemWrite(0xFE, uint8(rand.Intn(16)+1)) // Random number between 1 and 16
-	})
-
-	if !alive {
-		// Program has hit BRK (0x00) or custom HLT (0x02)
-		return nil
+func dumpFramebuffer(fb []byte) {
+	for y := 0; y < screenHeight; y++ {
+		for x := 0; x < screenWidth; x++ {
+			idx := (y*screenWidth + x) * 4
+			r := fb[idx]
+			if r > 0 {
+				print("█")
+			} else {
+				print(" ")
+			}
+		}
+		println()
 	}
+	println("-------------------------------------------------")
+}
 
-	// Check if screen memory has changed
-	if read_screen_state(g.cpu, g) {
-		// If it has, upload framebuffer to texture
-		g.texture.WritePixels(g.framebuffer)
+func (e *Emulator) Update() error {
+	handleUserInput(e.cpu)
+	for i := 0; i < 100; i++ {
+		alive := e.cpu.Step(func() {
+			e.cpu.MemWrite(0xFE, uint8(rand.Intn(15)+1))
+		})
+
+		if !alive {
+			panic("No longer alive")
+		}
 	}
-
-	// Slow down emulation a little
-	time.Sleep(70 * time.Microsecond)
-
+	if readScreenState(e.cpu, e) {
+		e.texture.WritePixels(e.framebuffer)
+	}
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
+func (e *Emulator) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(10, 10) // scale 10x
-	screen.DrawImage(g.texture, op)
+	screen.DrawImage(e.texture, op)
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (e *Emulator) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenWidth, screenHeight
 }
 
-func handle_user_input(c *cpu.CPU) {
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
-		c.MemWrite(0xFF, 0x77)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
-		c.MemWrite(0xFF, 0x73)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
-		c.MemWrite(0xFF, 0x61)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
-		c.MemWrite(0xFF, 0x64)
-	}
-}
+func NewEmulator() *Emulator {
+	fb := make([]byte, screenWidth*screenHeight*4)
+	cpuInst := cpu.InitCPU()
+	cpuInst.Load(game_code)
+	cpuInst.Reset()
+	texture := ebiten.NewImage(screenWidth, screenHeight)
 
-func read_nes_test() []uint8 {
-	dat, err := os.ReadFile("./nestest.nes")
-	if err != nil {
-		panic(err) // or handle it properly
+	return &Emulator{
+		framebuffer: fb,
+		cpu:         cpuInst,
+		texture:     texture,
 	}
-	return dat
 }
 
 func main() {
-	/* game := NewGame()
-	ebiten.SetWindowSize(screenWidth*10, screenHeight*10) // Scale window
-	ebiten.SetWindowTitle("Emulator Test Window")
+	ebiten.SetWindowSize(screenWidth*10, screenHeight*10)
+	ebiten.SetWindowTitle("NES Snake Emulator")
 
+	game := NewEmulator()
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
-	} */
-	test_data := read_nes_test()
-	c := cpu.InitCPU()
-	c.Load(test_data)
-	c.MemWrite16(0xFFFC, 0xC000)
-	c.Reset()
-	c.RunWithCallback(func() {
-		fmt.Println(cpu.TraceCPU(c))
-	})
-
+	}
 }
