@@ -11,6 +11,11 @@ func TraceCPU(c *CPU) string {
 	instr_len := 10
 	assem_len := 32
 	op_code, addr := c.GetNextOpCode()
+	is_unsupported := op_code.name[0] == '*'
+	if is_unsupported {
+		instr_len = 9
+		assem_len = 33
+	}
 	switch op_code.mode {
 	case IMPLIED:
 		instr_part = fmt.Sprintf("%02X", op_code.code)

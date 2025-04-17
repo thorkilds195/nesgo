@@ -7,7 +7,7 @@ import (
 type AddressingMode uint8
 
 const STACK_RESET uint8 = 0xFD
-const PROGRAM_START uint16 = 0x0600
+const PROGRAM_START uint16 = 0xC000
 
 const (
 	IMMEDIATE AddressingMode = iota
@@ -186,6 +186,91 @@ var OPTABLE = map[uint8]OpCode{
 	0x60: {0x60, "RTS", IMPLIED, 2, 2, (*CPU).rts},
 	0xBA: {0xBA, "TSX", IMPLIED, 2, 2, (*CPU).tsx},
 	0x9A: {0x9A, "TXS", IMPLIED, 2, 2, (*CPU).txs},
+	// Unofficial opcodes
+	0x1A: {0x1A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0x3A: {0x3A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0x5A: {0x5A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0x7A: {0x7A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0xDA: {0xDA, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0xFA: {0xFA, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0x80: {0x80, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
+	0x82: {0x82, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
+	0x89: {0x89, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
+	0xC2: {0xC2, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
+	0xE2: {0xE2, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
+	0x0C: {0x0C, "*NOP", ABSOLUTE, 2, 7, (*CPU).ign},
+	0x1C: {0x1C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
+	0x3C: {0x3C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
+	0x5C: {0x5C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
+	0x7C: {0x7C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
+	0xDC: {0xDC, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
+	0xFC: {0xFC, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
+	0x04: {0x04, "*NOP", ZEROPAGE, 2, 7, (*CPU).ign},
+	0x44: {0x44, "*NOP", ZEROPAGE, 2, 7, (*CPU).ign},
+	0x64: {0x64, "*NOP", ZEROPAGE, 2, 7, (*CPU).ign},
+	0x14: {0x14, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
+	0x34: {0x34, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
+	0x54: {0x54, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
+	0x74: {0x74, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
+	0xD4: {0xD4, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
+	0xF4: {0xF4, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
+	0xA3: {0xA3, "*LAX", INDIRECTX, 2, 7, (*CPU).lax},
+	0xA7: {0xA7, "*LAX", ZEROPAGE, 2, 7, (*CPU).lax},
+	0xAF: {0xAF, "*LAX", ABSOLUTE, 2, 7, (*CPU).lax},
+	0xB3: {0xB3, "*LAX", INDIRECTY, 2, 7, (*CPU).lax},
+	0xB7: {0xB7, "*LAX", ZEROPAGEY, 2, 7, (*CPU).lax},
+	0xBF: {0xBF, "*LAX", ABSOLUTEY, 2, 7, (*CPU).lax},
+	0x83: {0x83, "*SAX", INDIRECTX, 2, 7, (*CPU).sax},
+	0x87: {0x87, "*SAX", ZEROPAGE, 2, 7, (*CPU).sax},
+	0x8F: {0x8F, "*SAX", ABSOLUTE, 2, 7, (*CPU).sax},
+	0x97: {0x97, "*SAX", ZEROPAGEY, 2, 7, (*CPU).sax},
+	0x9E: {0x9E, "*SHX", ABSOLUTEY, 2, 7, (*CPU).shx},
+	0x9C: {0x9C, "*SHY", ABSOLUTEX, 2, 7, (*CPU).shy},
+	0x93: {0x93, "*SHA", INDIRECTY, 2, 7, (*CPU).sha},
+	0x9F: {0x9F, "*SHA", ABSOLUTEY, 2, 7, (*CPU).sha},
+	0xEB: {0xEB, "*SBC", IMMEDIATE, 2, 7, (*CPU).sbc},
+	0xC3: {0xC3, "*DCP", INDIRECTX, 2, 7, (*CPU).dcp},
+	0xC7: {0xC7, "*DCP", ZEROPAGE, 2, 7, (*CPU).dcp},
+	0xCF: {0xCF, "*DCP", ABSOLUTE, 2, 7, (*CPU).dcp},
+	0xD3: {0xD3, "*DCP", INDIRECTY, 2, 7, (*CPU).dcp},
+	0xD7: {0xD7, "*DCP", ZEROPAGEX, 2, 7, (*CPU).dcp},
+	0xDB: {0xDB, "*DCP", ABSOLUTEY, 2, 7, (*CPU).dcp},
+	0xDF: {0xDF, "*DCP", ABSOLUTEX, 2, 7, (*CPU).dcp},
+	0xE3: {0xE3, "*ISB", INDIRECTX, 2, 7, (*CPU).isc},
+	0xE7: {0xE7, "*ISB", ZEROPAGE, 2, 7, (*CPU).isc},
+	0xEF: {0xEF, "*ISB", ABSOLUTE, 2, 7, (*CPU).isc},
+	0xF3: {0xF3, "*ISB", INDIRECTY, 2, 7, (*CPU).isc},
+	0xF7: {0xF7, "*ISB", ZEROPAGEX, 2, 7, (*CPU).isc},
+	0xFB: {0xFB, "*ISB", ABSOLUTEY, 2, 7, (*CPU).isc},
+	0xFF: {0xFF, "*ISB", ABSOLUTEX, 2, 7, (*CPU).isc},
+	0x23: {0x23, "*RLA", INDIRECTX, 2, 7, (*CPU).rla},
+	0x27: {0x27, "*RLA", ZEROPAGE, 2, 7, (*CPU).rla},
+	0x2F: {0x2F, "*RLA", ABSOLUTE, 2, 7, (*CPU).rla},
+	0x33: {0x33, "*RLA", INDIRECTY, 2, 7, (*CPU).rla},
+	0x37: {0x37, "*RLA", ZEROPAGEX, 2, 7, (*CPU).rla},
+	0x3B: {0x3B, "*RLA", ABSOLUTEY, 2, 7, (*CPU).rla},
+	0x3F: {0x3F, "*RLA", ABSOLUTEX, 2, 7, (*CPU).rla},
+	0x03: {0x03, "*SLO", INDIRECTX, 2, 7, (*CPU).slo},
+	0x07: {0x07, "*SLO", ZEROPAGE, 2, 7, (*CPU).slo},
+	0x0F: {0x0F, "*SLO", ABSOLUTE, 2, 7, (*CPU).slo},
+	0x13: {0x13, "*SLO", INDIRECTY, 2, 7, (*CPU).slo},
+	0x17: {0x17, "*SLO", ZEROPAGEX, 2, 7, (*CPU).slo},
+	0x1B: {0x1B, "*SLO", ABSOLUTEY, 2, 7, (*CPU).slo},
+	0x1F: {0x1F, "*SLO", ABSOLUTEX, 2, 7, (*CPU).slo},
+	0x43: {0x43, "*SRE", INDIRECTX, 2, 7, (*CPU).sre},
+	0x47: {0x47, "*SRE", ZEROPAGE, 2, 7, (*CPU).sre},
+	0x4F: {0x4F, "*SRE", ABSOLUTE, 2, 7, (*CPU).sre},
+	0x53: {0x53, "*SRE", INDIRECTY, 2, 7, (*CPU).sre},
+	0x57: {0x57, "*SRE", ZEROPAGEX, 2, 7, (*CPU).sre},
+	0x5B: {0x5B, "*SRE", ABSOLUTEY, 2, 7, (*CPU).sre},
+	0x5F: {0x5F, "*SRE", ABSOLUTEX, 2, 7, (*CPU).sre},
+	0x63: {0x63, "*RRA", INDIRECTX, 2, 7, (*CPU).rra},
+	0x67: {0x67, "*RRA", ZEROPAGE, 2, 7, (*CPU).rra},
+	0x6F: {0x6F, "*RRA", ABSOLUTE, 2, 7, (*CPU).rra},
+	0x73: {0x73, "*RRA", INDIRECTY, 2, 7, (*CPU).rra},
+	0x77: {0x77, "*RRA", ZEROPAGEX, 2, 7, (*CPU).rra},
+	0x7B: {0x7B, "*RRA", ABSOLUTEY, 2, 7, (*CPU).rra},
+	0x7F: {0x7F, "*RRA", ABSOLUTEX, 2, 7, (*CPU).rra},
 	// Custom instruction to quit and leave emulator in current state
 	0x02: {0x02, "HLT", IMPLIED, 2, 2, (*CPU).hlt},
 }
@@ -197,7 +282,7 @@ type CPU struct {
 	status          uint8
 	program_counter uint16
 	stack_pointer   uint8
-	memory          [0x10000]uint8
+	bus             *Bus
 }
 
 func (c *CPU) ProgramCounter() uint16 {
@@ -224,8 +309,8 @@ func (c *CPU) GetStackPointer() uint8 {
 	return c.stack_pointer
 }
 
-func InitCPU() *CPU {
-	return &CPU{}
+func InitCPU(b *Bus) *CPU {
+	return &CPU{bus: b, stack_pointer: STACK_RESET, program_counter: 0x8000, status: 0b100100}
 }
 
 func (c *CPU) LoadAndRun(program []uint8) {
@@ -266,7 +351,10 @@ func (c *CPU) Run() {
 }
 
 func (c *CPU) Load(program []uint8) {
-	copy(c.memory[PROGRAM_START:], program)
+	for i := range len(program) {
+		c.MemWrite(0x0000+uint16(i), program[i])
+	}
+	//copy(c.memory[PROGRAM_START:], program)
 
 	c.MemWrite16(0xFFFC, PROGRAM_START)
 }
@@ -303,7 +391,7 @@ func (c *CPU) GetNextOpCode() (OpCode, uint16) {
 }
 
 func (c *CPU) push(val uint8) {
-	c.memory[0x0100+uint16(c.stack_pointer)] = val
+	c.bus.MemWrite(0x0100+uint16(c.stack_pointer), val)
 	c.stack_pointer--
 }
 
@@ -329,16 +417,16 @@ func (c *CPU) brk(op OpCode) {
 }
 
 func (c *CPU) MemRead(addr uint16) uint8 {
-	return c.memory[addr]
+	return c.bus.MemRead(addr)
 }
 
 func (c *CPU) MemWrite(addr uint16, v uint8) {
-	c.memory[addr] = v
+	c.bus.MemWrite(addr, v)
 }
 
 func (c *CPU) MemRead16(addr uint16) uint16 {
-	lo := c.memory[addr]
-	hi := c.memory[addr+1]
+	lo := c.bus.MemRead(addr)
+	hi := c.bus.MemRead(addr + 1)
 	return make_16_bit(hi, lo)
 }
 
@@ -350,8 +438,8 @@ func (c *CPU) mem_read_16_zero(addr uint8) uint16 {
 func (c *CPU) MemWrite16(addr uint16, v uint16) {
 	lo := uint8(v & 0xFF)
 	hi := uint8(v >> 8)
-	c.memory[addr] = lo
-	c.memory[addr+1] = hi
+	c.bus.MemWrite(addr, lo)
+	c.bus.MemWrite(addr+1, hi)
 }
 
 func make_16_bit(hi, lo uint8) uint16 {
@@ -638,7 +726,11 @@ func (c *CPU) bit(op OpCode) {
 }
 
 func (c *CPU) and(op OpCode) {
-	c.register_a &= c.interpret_mode(op.mode, nil, true)
+	c.do_and(c.interpret_mode(op.mode, nil, true))
+}
+
+func (c *CPU) do_and(val uint8) {
+	c.register_a &= val
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 }
@@ -657,6 +749,9 @@ func (c *CPU) ora(op OpCode) {
 
 func (c *CPU) sbc(op OpCode) {
 	val := c.interpret_mode(op.mode, nil, true)
+	c.do_sbc(val)
+}
+func (c *CPU) do_sbc(val uint8) {
 	// TODO: Understand what the below actually does properly
 	// The carry flag in 6502 is inverted when subtracting:
 	// if carry=1 => borrowIn=0, if carry=0 => borrowIn=1.
@@ -799,6 +894,146 @@ func (c *CPU) ror(op OpCode) {
 }
 
 func (c *CPU) nop(op OpCode) {
+}
+
+func (c *CPU) skb(op OpCode) {
+	c.interpret_mode(op.mode, nil, true)
+	c.program_counter++
+}
+
+func (c *CPU) ign(op OpCode) {
+	c.interpret_mode(op.mode, nil, true)
+	c.program_counter++
+}
+
+func (c *CPU) lax(op OpCode) {
+	c.lda(op)
+	c.tax(op)
+}
+
+func (c *CPU) dcp(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr, true)
+	c.program_counter++
+	val--
+	c.MemWrite(addr, val)
+	c.set_zero_and_negative_flag(val)
+	c.do_compare(val, c.register_a)
+}
+
+func (c *CPU) isc(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr, true)
+	val++
+	c.MemWrite(addr, val)
+	c.do_sbc(val)
+}
+
+func (c *CPU) sax(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
+	c.program_counter++
+	c.MemWrite(addr, c.register_a&c.register_x)
+}
+
+func (c *CPU) slo(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr, true)
+	pre_val := val
+	val <<= 1
+	c.MemWrite(addr, val)
+	if pre_val&0b1000_0000 > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	c.register_a |= val
+	c.set_zero_and_negative_flag(c.register_a)
+	c.program_counter++
+}
+
+func (c *CPU) sre(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr, true)
+	pre_val := val
+	val >>= 1
+	c.MemWrite(addr, val)
+	c.register_a ^= val
+	c.set_zero_and_negative_flag(c.register_a)
+	if pre_val&0b0000_0001 > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	c.program_counter++
+}
+
+func (c *CPU) rra(op OpCode) {
+	var addr uint16
+	var carry_and uint8
+	if c.is_carry_set() {
+		carry_and = 0b1000_0000
+	}
+	val := c.interpret_mode(op.mode, &addr, true)
+	pre_val := val
+	val >>= 1
+	val = carry_and | (val & 0b0111_1111)
+	c.MemWrite(addr, val)
+	if pre_val&0b0000_0001 > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	val = c.add_carry_bit(val)
+	result := val + c.register_a
+	c.decide_carry_bit(result, c.register_a)
+	c.compute_overflow_bit(val, c.register_a, result)
+	c.register_a = result
+	c.set_zero_and_negative_flag(c.register_a)
+	c.program_counter++
+}
+
+func (c *CPU) rla(op OpCode) {
+	var addr uint16
+	val := c.interpret_mode(op.mode, &addr, true)
+
+	// ROL
+	oldCarry := (c.status >> 0) & 1
+	carry := (val >> 7) & 1
+	val = ((val << 1) & 0xFF) | oldCarry
+	if carry > 0 {
+		c.set_carry_bit()
+	} else {
+		c.clear_carry_bit()
+	}
+	c.set_zero_and_negative_flag(val)
+	c.MemWrite(addr, val)
+
+	// AND
+	c.register_a = c.register_a & val
+	c.set_zero_and_negative_flag(c.register_a)
+	c.program_counter++
+}
+
+func (c *CPU) shx(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
+	hi_b := uint8(addr >> 8)
+	wr_data := c.register_x & (hi_b + 1)
+	c.program_counter++
+	c.MemWrite(addr, wr_data)
+}
+
+func (c *CPU) shy(op OpCode) {
+	var addr uint16
+	c.interpret_mode(op.mode, &addr, true)
+	hi_b := uint8(addr >> 8)
+	wr_data := c.register_y & (hi_b + 1)
+	c.program_counter++
+	c.MemWrite(addr, wr_data)
+}
+
+func (c *CPU) sha(op OpCode) {
 }
 
 func (c *CPU) bcc(op OpCode) {
