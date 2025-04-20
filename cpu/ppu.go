@@ -72,7 +72,7 @@ func (p *PPU) WriteToData(v uint8) {
 	} else if addr >= 0x2000 && addr <= 0x2FFF {
 		p.vram[p.mirrorVramAddr(addr)] = v
 	} else if addr >= 0x3000 && addr <= 0x3EFF {
-		panic("0x3000 to 0x3EFF shoult be used")
+		panic("0x3000 to 0x3EFF shouldnt be used")
 	} else if addr == 0x3F10 || addr == 0x3F14 ||
 		addr == 0x3F18 || addr == 0x3F1C {
 		addr_mirr := addr - 0x10
@@ -184,7 +184,7 @@ func (a *AddressRegister) Update(v uint8) {
 }
 
 func (a *AddressRegister) get() uint16 {
-	return (uint16(a.value[1]) | uint16(a.value[0]<<8))
+	return (uint16(a.value[1]) | (uint16(a.value[0]) << 8))
 }
 
 func (a *AddressRegister) increment() {
