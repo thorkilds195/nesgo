@@ -34,6 +34,8 @@ type OpCode struct {
 	f_call func(*CPU, OpCode)
 }
 
+// TODO: Check all the cycles and page crossing logic for opcodes
+
 var OPTABLE = map[uint8]OpCode{
 	0xA9: {0xA9, "LDA", IMMEDIATE, 2, 2, (*CPU).lda},
 	0xA5: {0xA5, "LDA", ZEROPAGE, 2, 3, (*CPU).lda},
@@ -333,6 +335,9 @@ func (c *CPU) RunWithCallback(f_call func()) {
 	var op OpCode
 	var ok bool
 	for {
+		if c.bus.PollNMIStatus() {
+			c.interrupt_nmi()
+		}
 		f_call()
 		opcode := c.MemRead(c.program_counter)
 		c.program_counter++
@@ -343,6 +348,8 @@ func (c *CPU) RunWithCallback(f_call func()) {
 		if opcode == 0x00 || opcode == 0x02 {
 			return
 		}
+		c.bus.Tick(op.cycles)
+
 	}
 }
 
@@ -390,6 +397,10 @@ func (c *CPU) GetNextOpCode() (OpCode, uint16) {
 	return op, addr
 }
 
+func (c *CPU) interrupt_nmi() {
+	c.doInterrupt(0xFFFA)
+}
+
 func (c *CPU) push(val uint8) {
 	c.bus.MemWrite(0x0100+uint16(c.stack_pointer), val)
 	c.stack_pointer--
@@ -408,12 +419,16 @@ func (c *CPU) push_16(val uint16) {
 }
 
 func (c *CPU) brk(op OpCode) {
+	c.doInterrupt(0xFFFE)
+}
+
+func (c *CPU) doInterrupt(rd_addr uint16) {
 	c.push_16(c.program_counter + 2)
 	l_status := c.status
 	l_status |= 0b0011_0000
 	c.push(l_status)
 	c.status |= 0b0000_0100
-	c.program_counter = c.MemRead16(0xFFFE)
+	c.program_counter = c.MemRead16(rd_addr)
 }
 
 func (c *CPU) MemRead(addr uint16) uint8 {

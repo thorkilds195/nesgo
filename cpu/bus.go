@@ -9,6 +9,7 @@ type Bus struct {
 	cpu_vram [2048]uint8
 	rom      *Rom
 	ppu      *PPU
+	cycles   uint32
 }
 
 func InitBus(r *Rom) *Bus {
@@ -17,6 +18,11 @@ func InitBus(r *Rom) *Bus {
 		rom: r,
 		ppu: p,
 	}
+}
+
+func (b *Bus) Tick(cycles uint8) {
+	b.cycles += uint32(cycles)
+	b.ppu.Tick(cycles * 3)
 }
 
 func (b *Bus) MemRead(addr uint16) uint8 {
@@ -72,11 +78,13 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 			mirror_down_addr := addr & 0b00100000_00000111
 			b.MemWrite(mirror_down_addr, val)
 		}
-		_ = addr & 0b00100000_00000111
-		panic("No PPU supported yet")
 	} else if addr >= 0x8000 && addr <= 0xFFFF {
 		panic("Attempt to write to rom space")
 	}
+}
+
+func (b *Bus) PollNMIStatus() bool {
+	return b.ppu.nmi_interrupt
 }
 
 func (b *Bus) readPgrRom(addr uint16) uint8 {

@@ -61,3 +61,7 @@ func InitRom(data []uint8) *Rom {
 		screen_mirroring: mirroring,
 	}
 }
+
+func (r *Rom) GetCHRRom() []uint8 {
+	return r.chr_rom
+}

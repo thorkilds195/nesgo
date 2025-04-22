@@ -13,6 +13,9 @@ type PPU struct {
 	status        *StatusRegister
 	scroll        *ScrollRegister
 	data_buffer   uint8
+	cycles        uint32
+	scanline      uint32
+	nmi_interrupt bool
 }
 
 func NewPPU(chr_rom []uint8, mirroring Mirroring) *PPU {
@@ -38,8 +41,39 @@ func (p *PPU) WriteToOAMAddr(v uint8) {
 	p.oam_addr_reg = v
 }
 
+func (p *PPU) Tick(cycles uint8) bool {
+	p.cycles += uint32(cycles)
+	if p.cycles >= 341 {
+		p.cycles -= 341
+		p.scanline += 1
+		if p.scanline == 241 {
+			p.status.setVblank()
+			p.status.setSprite0Flag()
+			if p.ctrl.GenerateVBlankNMI() {
+				p.nmi_interrupt = true
+			}
+		}
+		if p.scanline >= 262 {
+			p.scanline = 0
+			p.nmi_interrupt = false
+			p.status.resetVblank()
+			p.status.clearSprite0Flag()
+			return true
+		}
+	}
+	return false
+}
+
+func (p *PPU) PollNMIStatus(v uint8) bool {
+	return p.nmi_interrupt
+}
+
 func (p *PPU) WriteToPPUCtrl(v uint8) {
+	before_nmi_status := p.ctrl.GenerateVBlankNMI()
 	p.ctrl.Update(v)
+	if !before_nmi_status && p.ctrl.GenerateVBlankNMI() && p.status.isVblankSet() {
+		p.nmi_interrupt = true
+	}
 }
 
 func (p *PPU) WriteToScroll(v uint8) {
@@ -209,6 +243,9 @@ type ControlRegister struct {
 func NewControlRegister() *ControlRegister {
 	return &ControlRegister{value: 0b0000_0000}
 }
+func (c *ControlRegister) GenerateVBlankNMI() bool {
+	return (c.value & 0b1000_0000) > 0
+}
 
 func (c *ControlRegister) VramAddIncrement() uint8 {
 	if c.value&0b0000_0100 > 0 {
@@ -286,6 +323,10 @@ func (m *StatusRegister) setVblank() {
 
 func (m *StatusRegister) setSprite0Flag() {
 	m.value |= 0b0100_0000
+}
+
+func (m *StatusRegister) clearSprite0Flag() {
+	m.value &= 0b1011_1111
 }
 
 func (m *StatusRegister) setSpriteOverflow() {

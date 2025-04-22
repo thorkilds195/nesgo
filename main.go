@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	screenWidth  = 32
-	screenHeight = 32
+	screenWidth  = 256
+	screenHeight = 240
 )
 
 func colorFromByte(b uint8) (r, g, b2 byte) {
@@ -94,6 +94,8 @@ func dumpFramebuffer(fb []byte) {
 }
 
 func (e *Emulator) Update() error {
+	// e.texture.WritePixels(e.framebuffer)
+	return nil
 	handleUserInput(e.cpu)
 	for i := 0; i < 100; i++ {
 		alive := e.cpu.Step(func() {
@@ -131,17 +133,62 @@ func NewEmulator(c *cpu.CPU) *Emulator {
 	}
 }
 
+func showTileBank(chr_rom []uint8, bank uint32) *cpu.Frame {
+	frame := cpu.NewFrame()
+	bank = (bank * 0x1000)
+	tile_y := 0
+	tile_x := 0
+	for tile_nr := 0; tile_nr < 255; tile_nr++ {
+		if tile_nr != 0 && tile_nr%20 == 0 {
+			tile_y += 10
+			tile_x = 0
+		}
+		tile := chr_rom[(bank + uint32(tile_nr)*16):(bank + uint32(tile_nr)*16 + 16)]
+		for y := 0; y <= 7; y++ {
+			upper := tile[y]
+			lower := tile[y+8]
+			for x := 7; x >= 0; x-- {
+				value := (1&upper)<<1 | (1 & lower)
+				upper = upper >> 1
+				lower = lower >> 1
+				var rgb cpu.RGB
+				switch value {
+				case 0:
+					rgb = cpu.SYSTEM_PALLETE[0x01]
+				case 1:
+					rgb = cpu.SYSTEM_PALLETE[0x23]
+				case 2:
+					rgb = cpu.SYSTEM_PALLETE[0x27]
+				case 3:
+					rgb = cpu.SYSTEM_PALLETE[0x30]
+				default:
+					panic("Not valid rgb rom")
+				}
+				frame.SetPixel(uint32(tile_x+x), uint32(tile_y+y), rgb)
+			}
+		}
+		tile_x += 10
+	}
+	return frame
+}
+
+func copyToBuffer(f *cpu.Frame, e *Emulator) {
+	e.texture.WritePixels(f.Data)
+}
+
 func main() {
 	ebiten.SetWindowSize(screenWidth*10, screenHeight*10)
-	ebiten.SetWindowTitle("NES Snake Emulator")
-	dat, err := os.ReadFile("./snake.nes")
+	ebiten.SetWindowTitle("NES Emulator")
+	dat, err := os.ReadFile("./pacman.nes")
 	if err != nil {
 		panic(err)
 	}
 	rom := cpu.InitRom(dat)
 	bus := cpu.InitBus(rom)
 	cpu := cpu.InitCPU(bus)
+	frame := showTileBank(rom.GetCHRRom(), 1)
 	game := NewEmulator(cpu)
+	copyToBuffer(frame, game)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
