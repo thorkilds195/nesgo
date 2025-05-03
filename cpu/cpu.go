@@ -63,16 +63,16 @@ var OPTABLE = map[uint8]OpCode{
 	0x6D: {0x6D, "ADC", ABSOLUTE, 3, 4, (*CPU).adc},
 	0x7D: {0x7D, "ADC", ABSOLUTEX, 3, 4, (*CPU).adc},
 	0x79: {0x79, "ADC", ABSOLUTEY, 3, 4, (*CPU).adc},
-	0x61: {0x61, "ADC", INDIRECTX, 3, 4, (*CPU).adc},
-	0x71: {0x71, "ADC", INDIRECTY, 3, 4, (*CPU).adc},
+	0x61: {0x61, "ADC", INDIRECTX, 3, 6, (*CPU).adc},
+	0x71: {0x71, "ADC", INDIRECTY, 3, 5, (*CPU).adc},
 	0x29: {0x29, "AND", IMMEDIATE, 2, 2, (*CPU).and},
 	0x25: {0x25, "AND", ZEROPAGE, 2, 3, (*CPU).and},
 	0x35: {0x35, "AND", ZEROPAGEX, 2, 4, (*CPU).and},
 	0x2D: {0x2D, "AND", ABSOLUTE, 3, 4, (*CPU).and},
 	0x3D: {0x3D, "AND", ABSOLUTEX, 3, 4, (*CPU).and},
 	0x39: {0x39, "AND", ABSOLUTEY, 3, 4, (*CPU).and},
-	0x21: {0x21, "AND", INDIRECTX, 3, 4, (*CPU).and},
-	0x31: {0x31, "AND", INDIRECTY, 3, 4, (*CPU).and},
+	0x21: {0x21, "AND", INDIRECTX, 3, 6, (*CPU).and},
+	0x31: {0x31, "AND", INDIRECTY, 3, 5, (*CPU).and},
 	0x0A: {0x0A, "ASL", ACCUMULATOR, 1, 2, (*CPU).asl},
 	0x06: {0x06, "ASL", ZEROPAGE, 2, 5, (*CPU).asl},
 	0x16: {0x16, "ASL", ZEROPAGEX, 2, 6, (*CPU).asl},
@@ -82,7 +82,7 @@ var OPTABLE = map[uint8]OpCode{
 	0xB0: {0xB0, "BCS", RELATIVE, 2, 2, (*CPU).bcs}, // plus 1 if branch succeeds, plus 2 if new page
 	0xF0: {0xF0, "BEQ", RELATIVE, 2, 2, (*CPU).beq}, // plus 1 if branch succeeds, plus 2 if new page
 	0x24: {0x24, "BIT", ZEROPAGE, 2, 3, (*CPU).bit},
-	0x2C: {0x2C, "BIT", ABSOLUTE, 2, 3, (*CPU).bit},
+	0x2C: {0x2C, "BIT", ABSOLUTE, 2, 4, (*CPU).bit},
 	0x30: {0x30, "BMI", RELATIVE, 2, 2, (*CPU).bmi}, // plus 1 if branch succeeds, plus 2 if new page
 	0xD0: {0xD0, "BNE", RELATIVE, 2, 2, (*CPU).bne}, // plus 1 if branch succeeds, plus 2 if new page
 	0x10: {0x10, "BPL", RELATIVE, 2, 2, (*CPU).bpl}, // plus 1 if branch succeeds, plus 2 if new page
@@ -94,37 +94,37 @@ var OPTABLE = map[uint8]OpCode{
 	0x58: {0x58, "CLI", IMPLIED, 1, 2, (*CPU).cli},
 	0xB8: {0xB8, "CLV", IMPLIED, 1, 2, (*CPU).clv},
 	0xC9: {0xC9, "CMP", IMMEDIATE, 2, 2, (*CPU).cmp},
-	0xC5: {0xC5, "CMP", ZEROPAGE, 2, 2, (*CPU).cmp},
-	0xD5: {0xD5, "CMP", ZEROPAGEX, 2, 2, (*CPU).cmp},
-	0xCD: {0xCD, "CMP", ABSOLUTE, 2, 2, (*CPU).cmp},
-	0xDD: {0xDD, "CMP", ABSOLUTEX, 2, 2, (*CPU).cmp},
-	0xD9: {0xD9, "CMP", ABSOLUTEY, 2, 2, (*CPU).cmp},
-	0xC1: {0xC1, "CMP", INDIRECTX, 2, 2, (*CPU).cmp},
-	0xD1: {0xD1, "CMP", INDIRECTY, 2, 2, (*CPU).cmp},
+	0xC5: {0xC5, "CMP", ZEROPAGE, 2, 3, (*CPU).cmp},
+	0xD5: {0xD5, "CMP", ZEROPAGEX, 2, 4, (*CPU).cmp},
+	0xCD: {0xCD, "CMP", ABSOLUTE, 2, 4, (*CPU).cmp},
+	0xDD: {0xDD, "CMP", ABSOLUTEX, 2, 4, (*CPU).cmp},
+	0xD9: {0xD9, "CMP", ABSOLUTEY, 2, 4, (*CPU).cmp},
+	0xC1: {0xC1, "CMP", INDIRECTX, 2, 6, (*CPU).cmp},
+	0xD1: {0xD1, "CMP", INDIRECTY, 2, 5, (*CPU).cmp},
 	0xE0: {0xE0, "CPX", IMMEDIATE, 2, 2, (*CPU).cpx},
-	0xE4: {0xE4, "CPX", ZEROPAGE, 2, 2, (*CPU).cpx},
-	0xEC: {0xEC, "CPX", ABSOLUTE, 2, 2, (*CPU).cpx},
+	0xE4: {0xE4, "CPX", ZEROPAGE, 2, 3, (*CPU).cpx},
+	0xEC: {0xEC, "CPX", ABSOLUTE, 2, 4, (*CPU).cpx},
 	0xC0: {0xC0, "CPY", IMMEDIATE, 2, 2, (*CPU).cpy},
-	0xC4: {0xC4, "CPY", ZEROPAGE, 2, 2, (*CPU).cpy},
-	0xCC: {0xCC, "CPY", ABSOLUTE, 2, 2, (*CPU).cpy},
-	0xC6: {0xC6, "DEC", ZEROPAGE, 2, 2, (*CPU).dec},
-	0xD6: {0xD6, "DEC", ZEROPAGEX, 2, 2, (*CPU).dec},
-	0xCE: {0xCE, "DEC", ABSOLUTE, 2, 2, (*CPU).dec},
-	0xDE: {0xDE, "DEC", ABSOLUTEX, 2, 2, (*CPU).dec},
+	0xC4: {0xC4, "CPY", ZEROPAGE, 2, 3, (*CPU).cpy},
+	0xCC: {0xCC, "CPY", ABSOLUTE, 2, 4, (*CPU).cpy},
+	0xC6: {0xC6, "DEC", ZEROPAGE, 2, 5, (*CPU).dec},
+	0xD6: {0xD6, "DEC", ZEROPAGEX, 2, 6, (*CPU).dec},
+	0xCE: {0xCE, "DEC", ABSOLUTE, 2, 6, (*CPU).dec},
+	0xDE: {0xDE, "DEC", ABSOLUTEX, 2, 7, (*CPU).dec},
 	0xCA: {0xCA, "DEX", IMPLIED, 2, 2, (*CPU).dex},
 	0x88: {0x88, "DEY", IMPLIED, 2, 2, (*CPU).dey},
 	0x49: {0x49, "EOR", IMMEDIATE, 2, 2, (*CPU).eor},
-	0x45: {0x45, "EOR", ZEROPAGE, 2, 2, (*CPU).eor},
-	0x55: {0x55, "EOR", ZEROPAGEX, 2, 2, (*CPU).eor},
-	0x4D: {0x4D, "EOR", ABSOLUTE, 2, 2, (*CPU).eor},
-	0x5D: {0x5D, "EOR", ABSOLUTEX, 2, 2, (*CPU).eor},
-	0x59: {0x59, "EOR", ABSOLUTEY, 2, 2, (*CPU).eor},
-	0x41: {0x41, "EOR", INDIRECTX, 2, 2, (*CPU).eor},
-	0x51: {0x51, "EOR", INDIRECTY, 2, 2, (*CPU).eor},
-	0xE6: {0xE6, "INC", ZEROPAGE, 2, 2, (*CPU).inc},
-	0xF6: {0xF6, "INC", ZEROPAGEX, 2, 2, (*CPU).inc},
-	0xEE: {0xEE, "INC", ABSOLUTE, 2, 2, (*CPU).inc},
-	0xFE: {0xFE, "INC", ABSOLUTEX, 2, 2, (*CPU).inc},
+	0x45: {0x45, "EOR", ZEROPAGE, 2, 3, (*CPU).eor},
+	0x55: {0x55, "EOR", ZEROPAGEX, 2, 4, (*CPU).eor},
+	0x4D: {0x4D, "EOR", ABSOLUTE, 2, 4, (*CPU).eor},
+	0x5D: {0x5D, "EOR", ABSOLUTEX, 2, 4, (*CPU).eor},
+	0x59: {0x59, "EOR", ABSOLUTEY, 2, 4, (*CPU).eor},
+	0x41: {0x41, "EOR", INDIRECTX, 2, 6, (*CPU).eor},
+	0x51: {0x51, "EOR", INDIRECTY, 2, 5, (*CPU).eor},
+	0xE6: {0xE6, "INC", ZEROPAGE, 2, 5, (*CPU).inc},
+	0xF6: {0xF6, "INC", ZEROPAGEX, 2, 6, (*CPU).inc},
+	0xEE: {0xEE, "INC", ABSOLUTE, 2, 6, (*CPU).inc},
+	0xFE: {0xFE, "INC", ABSOLUTEX, 2, 7, (*CPU).inc},
 	0xC8: {0xC8, "INY", IMPLIED, 2, 2, (*CPU).iny},
 	0x4C: {0x4C, "JMP", ABSOLUTE, 3, 3, (*CPU).jmp},
 	0x6C: {0x6C, "JMP", INDIRECT, 3, 5, (*CPU).jmp},
@@ -133,15 +133,15 @@ var OPTABLE = map[uint8]OpCode{
 	0x56: {0x56, "LSR", ZEROPAGEX, 2, 6, (*CPU).lsr},
 	0x4E: {0x4E, "LSR", ABSOLUTE, 2, 6, (*CPU).lsr},
 	0x5E: {0x5E, "LSR", ABSOLUTEX, 2, 7, (*CPU).lsr},
-	0xEA: {0xEA, "NOP", IMPLIED, 2, 7, (*CPU).nop},
+	0xEA: {0xEA, "NOP", IMPLIED, 2, 2, (*CPU).nop},
 	0x09: {0x09, "ORA", IMMEDIATE, 2, 2, (*CPU).ora},
-	0x05: {0x05, "ORA", ZEROPAGE, 2, 2, (*CPU).ora},
-	0x15: {0x15, "ORA", ZEROPAGEX, 2, 2, (*CPU).ora},
-	0x0D: {0x0D, "ORA", ABSOLUTE, 2, 2, (*CPU).ora},
-	0x1D: {0x1D, "ORA", ABSOLUTEX, 2, 2, (*CPU).ora},
-	0x19: {0x19, "ORA", ABSOLUTEY, 2, 2, (*CPU).ora},
-	0x01: {0x01, "ORA", INDIRECTX, 2, 2, (*CPU).ora},
-	0x11: {0x11, "ORA", INDIRECTY, 2, 2, (*CPU).ora},
+	0x05: {0x05, "ORA", ZEROPAGE, 2, 3, (*CPU).ora},
+	0x15: {0x15, "ORA", ZEROPAGEX, 2, 4, (*CPU).ora},
+	0x0D: {0x0D, "ORA", ABSOLUTE, 2, 4, (*CPU).ora},
+	0x1D: {0x1D, "ORA", ABSOLUTEX, 2, 4, (*CPU).ora},
+	0x19: {0x19, "ORA", ABSOLUTEY, 2, 4, (*CPU).ora},
+	0x01: {0x01, "ORA", INDIRECTX, 2, 6, (*CPU).ora},
+	0x11: {0x11, "ORA", INDIRECTY, 2, 5, (*CPU).ora},
 	0x2A: {0x2A, "ROL", ACCUMULATOR, 1, 2, (*CPU).rol},
 	0x26: {0x26, "ROL", ZEROPAGE, 2, 5, (*CPU).rol},
 	0x36: {0x36, "ROL", ZEROPAGEX, 2, 6, (*CPU).rol},
@@ -153,124 +153,124 @@ var OPTABLE = map[uint8]OpCode{
 	0x6E: {0x6E, "ROR", ABSOLUTE, 2, 6, (*CPU).ror},
 	0x7E: {0x7E, "ROR", ABSOLUTEX, 2, 7, (*CPU).ror},
 	0xE9: {0xE9, "SBC", IMMEDIATE, 2, 2, (*CPU).sbc},
-	0xE5: {0xE5, "SBC", ZEROPAGE, 2, 2, (*CPU).sbc},
-	0xF5: {0xF5, "SBC", ZEROPAGEX, 2, 2, (*CPU).sbc},
-	0xED: {0xED, "SBC", ABSOLUTE, 2, 2, (*CPU).sbc},
-	0xFD: {0xFD, "SBC", ABSOLUTEX, 2, 2, (*CPU).sbc},
-	0xF9: {0xF9, "SBC", ABSOLUTEY, 2, 2, (*CPU).sbc},
-	0xE1: {0xE1, "SBC", INDIRECTX, 2, 2, (*CPU).sbc},
-	0xF1: {0xF1, "SBC", INDIRECTY, 2, 2, (*CPU).sbc},
-	0x38: {0x38, "SEC", IMPLIED, 2, 2, (*CPU).sec},
+	0xE5: {0xE5, "SBC", ZEROPAGE, 2, 3, (*CPU).sbc},
+	0xF5: {0xF5, "SBC", ZEROPAGEX, 2, 4, (*CPU).sbc},
+	0xED: {0xED, "SBC", ABSOLUTE, 2, 4, (*CPU).sbc},
+	0xFD: {0xFD, "SBC", ABSOLUTEX, 2, 4, (*CPU).sbc},
+	0xF9: {0xF9, "SBC", ABSOLUTEY, 2, 4, (*CPU).sbc},
+	0xE1: {0xE1, "SBC", INDIRECTX, 2, 6, (*CPU).sbc},
+	0xF1: {0xF1, "SBC", INDIRECTY, 2, 5, (*CPU).sbc},
+	0x38: {0x38, "SEC", IMPLIED, 1, 2, (*CPU).sec},
 	0xF8: {0xF8, "SED", IMPLIED, 2, 2, (*CPU).sed},
 	0x78: {0x78, "SEI", IMPLIED, 2, 2, (*CPU).sei},
-	0x85: {0x85, "STA", ZEROPAGE, 2, 2, (*CPU).sta},
-	0x95: {0x95, "STA", ZEROPAGEX, 2, 2, (*CPU).sta},
-	0x8D: {0x8D, "STA", ABSOLUTE, 2, 2, (*CPU).sta},
-	0x9D: {0x9D, "STA", ABSOLUTEX, 2, 2, (*CPU).sta},
-	0x99: {0x99, "STA", ABSOLUTEY, 2, 2, (*CPU).sta},
-	0x81: {0x81, "STA", INDIRECTX, 2, 2, (*CPU).sta},
-	0x91: {0x91, "STA", INDIRECTY, 2, 2, (*CPU).sta},
-	0x86: {0x86, "STX", ZEROPAGE, 2, 2, (*CPU).stx},
-	0x96: {0x96, "STX", ZEROPAGEY, 2, 2, (*CPU).stx},
-	0x8E: {0x8E, "STX", ABSOLUTE, 2, 2, (*CPU).stx},
-	0x84: {0x84, "STY", ZEROPAGE, 2, 2, (*CPU).sty},
-	0x94: {0x94, "STY", ZEROPAGEX, 2, 2, (*CPU).sty},
-	0x8C: {0x8C, "STY", ABSOLUTE, 2, 2, (*CPU).sty},
+	0x85: {0x85, "STA", ZEROPAGE, 2, 3, (*CPU).sta},
+	0x95: {0x95, "STA", ZEROPAGEX, 2, 4, (*CPU).sta},
+	0x8D: {0x8D, "STA", ABSOLUTE, 2, 4, (*CPU).sta},
+	0x9D: {0x9D, "STA", ABSOLUTEX, 2, 5, (*CPU).sta},
+	0x99: {0x99, "STA", ABSOLUTEY, 2, 5, (*CPU).sta},
+	0x81: {0x81, "STA", INDIRECTX, 2, 6, (*CPU).sta},
+	0x91: {0x91, "STA", INDIRECTY, 2, 6, (*CPU).sta},
+	0x86: {0x86, "STX", ZEROPAGE, 2, 3, (*CPU).stx},
+	0x96: {0x96, "STX", ZEROPAGEY, 2, 4, (*CPU).stx},
+	0x8E: {0x8E, "STX", ABSOLUTE, 2, 4, (*CPU).stx},
+	0x84: {0x84, "STY", ZEROPAGE, 2, 3, (*CPU).sty},
+	0x94: {0x94, "STY", ZEROPAGEX, 2, 4, (*CPU).sty},
+	0x8C: {0x8C, "STY", ABSOLUTE, 2, 4, (*CPU).sty},
 	0xA8: {0xA8, "TAY", IMPLIED, 2, 2, (*CPU).tay},
 	0x8A: {0x8A, "TXA", IMPLIED, 2, 2, (*CPU).txa},
 	0x98: {0x98, "TYA", IMPLIED, 2, 2, (*CPU).tya},
-	0x20: {0x20, "JSR", ABSOLUTE, 2, 2, (*CPU).jsr},
-	0x48: {0x48, "PHA", IMPLIED, 2, 2, (*CPU).pha},
-	0x08: {0x08, "PHP", IMPLIED, 2, 2, (*CPU).php},
-	0x68: {0x68, "PLA", IMPLIED, 2, 2, (*CPU).pla},
-	0x28: {0x28, "PLP", IMPLIED, 2, 2, (*CPU).plp},
-	0x40: {0x40, "RTI", IMPLIED, 2, 2, (*CPU).rti},
-	0x60: {0x60, "RTS", IMPLIED, 2, 2, (*CPU).rts},
+	0x20: {0x20, "JSR", ABSOLUTE, 2, 6, (*CPU).jsr},
+	0x48: {0x48, "PHA", IMPLIED, 2, 3, (*CPU).pha},
+	0x08: {0x08, "PHP", IMPLIED, 2, 3, (*CPU).php},
+	0x68: {0x68, "PLA", IMPLIED, 2, 4, (*CPU).pla},
+	0x28: {0x28, "PLP", IMPLIED, 2, 4, (*CPU).plp},
+	0x40: {0x40, "RTI", IMPLIED, 2, 6, (*CPU).rti},
+	0x60: {0x60, "RTS", IMPLIED, 2, 6, (*CPU).rts},
 	0xBA: {0xBA, "TSX", IMPLIED, 2, 2, (*CPU).tsx},
 	0x9A: {0x9A, "TXS", IMPLIED, 2, 2, (*CPU).txs},
 	// Unofficial opcodes
-	0x1A: {0x1A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
-	0x3A: {0x3A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
-	0x5A: {0x5A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
-	0x7A: {0x7A, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
-	0xDA: {0xDA, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
-	0xFA: {0xFA, "*NOP", IMPLIED, 2, 7, (*CPU).nop},
-	0x80: {0x80, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
-	0x82: {0x82, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
-	0x89: {0x89, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
-	0xC2: {0xC2, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
-	0xE2: {0xE2, "*NOP", IMMEDIATE, 2, 7, (*CPU).skb},
-	0x0C: {0x0C, "*NOP", ABSOLUTE, 2, 7, (*CPU).ign},
-	0x1C: {0x1C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
-	0x3C: {0x3C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
-	0x5C: {0x5C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
-	0x7C: {0x7C, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
-	0xDC: {0xDC, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
-	0xFC: {0xFC, "*NOP", ABSOLUTEX, 2, 7, (*CPU).ign},
-	0x04: {0x04, "*NOP", ZEROPAGE, 2, 7, (*CPU).ign},
-	0x44: {0x44, "*NOP", ZEROPAGE, 2, 7, (*CPU).ign},
-	0x64: {0x64, "*NOP", ZEROPAGE, 2, 7, (*CPU).ign},
-	0x14: {0x14, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
-	0x34: {0x34, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
-	0x54: {0x54, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
-	0x74: {0x74, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
-	0xD4: {0xD4, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
-	0xF4: {0xF4, "*NOP", ZEROPAGEX, 2, 7, (*CPU).ign},
-	0xA3: {0xA3, "*LAX", INDIRECTX, 2, 7, (*CPU).lax},
-	0xA7: {0xA7, "*LAX", ZEROPAGE, 2, 7, (*CPU).lax},
-	0xAF: {0xAF, "*LAX", ABSOLUTE, 2, 7, (*CPU).lax},
-	0xB3: {0xB3, "*LAX", INDIRECTY, 2, 7, (*CPU).lax},
-	0xB7: {0xB7, "*LAX", ZEROPAGEY, 2, 7, (*CPU).lax},
-	0xBF: {0xBF, "*LAX", ABSOLUTEY, 2, 7, (*CPU).lax},
-	0x83: {0x83, "*SAX", INDIRECTX, 2, 7, (*CPU).sax},
-	0x87: {0x87, "*SAX", ZEROPAGE, 2, 7, (*CPU).sax},
-	0x8F: {0x8F, "*SAX", ABSOLUTE, 2, 7, (*CPU).sax},
-	0x97: {0x97, "*SAX", ZEROPAGEY, 2, 7, (*CPU).sax},
+	0x1A: {0x1A, "*NOP", IMPLIED, 2, 2, (*CPU).nop},
+	0x3A: {0x3A, "*NOP", IMPLIED, 2, 2, (*CPU).nop},
+	0x5A: {0x5A, "*NOP", IMPLIED, 2, 2, (*CPU).nop},
+	0x7A: {0x7A, "*NOP", IMPLIED, 2, 2, (*CPU).nop},
+	0xDA: {0xDA, "*NOP", IMPLIED, 2, 2, (*CPU).nop},
+	0xFA: {0xFA, "*NOP", IMPLIED, 2, 2, (*CPU).nop},
+	0x80: {0x80, "*NOP", IMMEDIATE, 2, 2, (*CPU).skb},
+	0x82: {0x82, "*NOP", IMMEDIATE, 2, 2, (*CPU).skb},
+	0x89: {0x89, "*NOP", IMMEDIATE, 2, 2, (*CPU).skb},
+	0xC2: {0xC2, "*NOP", IMMEDIATE, 2, 2, (*CPU).skb},
+	0xE2: {0xE2, "*NOP", IMMEDIATE, 2, 2, (*CPU).skb},
+	0x0C: {0x0C, "*NOP", ABSOLUTE, 2, 4, (*CPU).ign},
+	0x1C: {0x1C, "*NOP", ABSOLUTEX, 2, 4, (*CPU).ign},
+	0x3C: {0x3C, "*NOP", ABSOLUTEX, 2, 4, (*CPU).ign},
+	0x5C: {0x5C, "*NOP", ABSOLUTEX, 2, 4, (*CPU).ign},
+	0x7C: {0x7C, "*NOP", ABSOLUTEX, 2, 4, (*CPU).ign},
+	0xDC: {0xDC, "*NOP", ABSOLUTEX, 2, 4, (*CPU).ign},
+	0xFC: {0xFC, "*NOP", ABSOLUTEX, 2, 4, (*CPU).ign},
+	0x04: {0x04, "*NOP", ZEROPAGE, 2, 3, (*CPU).ign},
+	0x44: {0x44, "*NOP", ZEROPAGE, 2, 3, (*CPU).ign},
+	0x64: {0x64, "*NOP", ZEROPAGE, 2, 3, (*CPU).ign},
+	0x14: {0x14, "*NOP", ZEROPAGEX, 2, 4, (*CPU).ign},
+	0x34: {0x34, "*NOP", ZEROPAGEX, 2, 4, (*CPU).ign},
+	0x54: {0x54, "*NOP", ZEROPAGEX, 2, 4, (*CPU).ign},
+	0x74: {0x74, "*NOP", ZEROPAGEX, 2, 4, (*CPU).ign},
+	0xD4: {0xD4, "*NOP", ZEROPAGEX, 2, 4, (*CPU).ign},
+	0xF4: {0xF4, "*NOP", ZEROPAGEX, 2, 4, (*CPU).ign},
+	0xA3: {0xA3, "*LAX", INDIRECTX, 2, 6, (*CPU).lax},
+	0xA7: {0xA7, "*LAX", ZEROPAGE, 2, 3, (*CPU).lax},
+	0xAF: {0xAF, "*LAX", ABSOLUTE, 2, 4, (*CPU).lax},
+	0xB3: {0xB3, "*LAX", INDIRECTY, 2, 5, (*CPU).lax},
+	0xB7: {0xB7, "*LAX", ZEROPAGEY, 2, 4, (*CPU).lax},
+	0xBF: {0xBF, "*LAX", ABSOLUTEY, 2, 4, (*CPU).lax},
+	0x83: {0x83, "*SAX", INDIRECTX, 2, 6, (*CPU).sax},
+	0x87: {0x87, "*SAX", ZEROPAGE, 2, 3, (*CPU).sax},
+	0x8F: {0x8F, "*SAX", ABSOLUTE, 2, 4, (*CPU).sax},
+	0x97: {0x97, "*SAX", ZEROPAGEY, 2, 4, (*CPU).sax},
 	0x9E: {0x9E, "*SHX", ABSOLUTEY, 2, 7, (*CPU).shx},
 	0x9C: {0x9C, "*SHY", ABSOLUTEX, 2, 7, (*CPU).shy},
-	0x93: {0x93, "*SHA", INDIRECTY, 2, 7, (*CPU).sha},
-	0x9F: {0x9F, "*SHA", ABSOLUTEY, 2, 7, (*CPU).sha},
-	0xEB: {0xEB, "*SBC", IMMEDIATE, 2, 7, (*CPU).sbc},
-	0xC3: {0xC3, "*DCP", INDIRECTX, 2, 7, (*CPU).dcp},
-	0xC7: {0xC7, "*DCP", ZEROPAGE, 2, 7, (*CPU).dcp},
-	0xCF: {0xCF, "*DCP", ABSOLUTE, 2, 7, (*CPU).dcp},
-	0xD3: {0xD3, "*DCP", INDIRECTY, 2, 7, (*CPU).dcp},
-	0xD7: {0xD7, "*DCP", ZEROPAGEX, 2, 7, (*CPU).dcp},
+	0x93: {0x93, "*SHA", INDIRECTY, 2, 6, (*CPU).sha},
+	0x9F: {0x9F, "*SHA", ABSOLUTEY, 2, 5, (*CPU).sha},
+	0xEB: {0xEB, "*SBC", IMMEDIATE, 2, 2, (*CPU).sbc},
+	0xC3: {0xC3, "*DCP", INDIRECTX, 2, 8, (*CPU).dcp},
+	0xC7: {0xC7, "*DCP", ZEROPAGE, 2, 5, (*CPU).dcp},
+	0xCF: {0xCF, "*DCP", ABSOLUTE, 2, 6, (*CPU).dcp},
+	0xD3: {0xD3, "*DCP", INDIRECTY, 2, 8, (*CPU).dcp},
+	0xD7: {0xD7, "*DCP", ZEROPAGEX, 2, 6, (*CPU).dcp},
 	0xDB: {0xDB, "*DCP", ABSOLUTEY, 2, 7, (*CPU).dcp},
 	0xDF: {0xDF, "*DCP", ABSOLUTEX, 2, 7, (*CPU).dcp},
-	0xE3: {0xE3, "*ISB", INDIRECTX, 2, 7, (*CPU).isc},
-	0xE7: {0xE7, "*ISB", ZEROPAGE, 2, 7, (*CPU).isc},
-	0xEF: {0xEF, "*ISB", ABSOLUTE, 2, 7, (*CPU).isc},
-	0xF3: {0xF3, "*ISB", INDIRECTY, 2, 7, (*CPU).isc},
-	0xF7: {0xF7, "*ISB", ZEROPAGEX, 2, 7, (*CPU).isc},
+	0xE3: {0xE3, "*ISB", INDIRECTX, 2, 8, (*CPU).isc},
+	0xE7: {0xE7, "*ISB", ZEROPAGE, 2, 5, (*CPU).isc},
+	0xEF: {0xEF, "*ISB", ABSOLUTE, 2, 6, (*CPU).isc},
+	0xF3: {0xF3, "*ISB", INDIRECTY, 2, 8, (*CPU).isc},
+	0xF7: {0xF7, "*ISB", ZEROPAGEX, 2, 6, (*CPU).isc},
 	0xFB: {0xFB, "*ISB", ABSOLUTEY, 2, 7, (*CPU).isc},
 	0xFF: {0xFF, "*ISB", ABSOLUTEX, 2, 7, (*CPU).isc},
-	0x23: {0x23, "*RLA", INDIRECTX, 2, 7, (*CPU).rla},
-	0x27: {0x27, "*RLA", ZEROPAGE, 2, 7, (*CPU).rla},
-	0x2F: {0x2F, "*RLA", ABSOLUTE, 2, 7, (*CPU).rla},
-	0x33: {0x33, "*RLA", INDIRECTY, 2, 7, (*CPU).rla},
-	0x37: {0x37, "*RLA", ZEROPAGEX, 2, 7, (*CPU).rla},
+	0x23: {0x23, "*RLA", INDIRECTX, 2, 8, (*CPU).rla},
+	0x27: {0x27, "*RLA", ZEROPAGE, 2, 5, (*CPU).rla},
+	0x2F: {0x2F, "*RLA", ABSOLUTE, 2, 6, (*CPU).rla},
+	0x33: {0x33, "*RLA", INDIRECTY, 2, 8, (*CPU).rla},
+	0x37: {0x37, "*RLA", ZEROPAGEX, 2, 6, (*CPU).rla},
 	0x3B: {0x3B, "*RLA", ABSOLUTEY, 2, 7, (*CPU).rla},
 	0x3F: {0x3F, "*RLA", ABSOLUTEX, 2, 7, (*CPU).rla},
-	0x03: {0x03, "*SLO", INDIRECTX, 2, 7, (*CPU).slo},
-	0x07: {0x07, "*SLO", ZEROPAGE, 2, 7, (*CPU).slo},
-	0x0F: {0x0F, "*SLO", ABSOLUTE, 2, 7, (*CPU).slo},
-	0x13: {0x13, "*SLO", INDIRECTY, 2, 7, (*CPU).slo},
-	0x17: {0x17, "*SLO", ZEROPAGEX, 2, 7, (*CPU).slo},
+	0x03: {0x03, "*SLO", INDIRECTX, 2, 8, (*CPU).slo},
+	0x07: {0x07, "*SLO", ZEROPAGE, 2, 5, (*CPU).slo},
+	0x0F: {0x0F, "*SLO", ABSOLUTE, 2, 6, (*CPU).slo},
+	0x13: {0x13, "*SLO", INDIRECTY, 2, 8, (*CPU).slo},
+	0x17: {0x17, "*SLO", ZEROPAGEX, 2, 6, (*CPU).slo},
 	0x1B: {0x1B, "*SLO", ABSOLUTEY, 2, 7, (*CPU).slo},
 	0x1F: {0x1F, "*SLO", ABSOLUTEX, 2, 7, (*CPU).slo},
-	0x43: {0x43, "*SRE", INDIRECTX, 2, 7, (*CPU).sre},
-	0x47: {0x47, "*SRE", ZEROPAGE, 2, 7, (*CPU).sre},
-	0x4F: {0x4F, "*SRE", ABSOLUTE, 2, 7, (*CPU).sre},
-	0x53: {0x53, "*SRE", INDIRECTY, 2, 7, (*CPU).sre},
-	0x57: {0x57, "*SRE", ZEROPAGEX, 2, 7, (*CPU).sre},
+	0x43: {0x43, "*SRE", INDIRECTX, 2, 8, (*CPU).sre},
+	0x47: {0x47, "*SRE", ZEROPAGE, 2, 5, (*CPU).sre},
+	0x4F: {0x4F, "*SRE", ABSOLUTE, 2, 6, (*CPU).sre},
+	0x53: {0x53, "*SRE", INDIRECTY, 2, 8, (*CPU).sre},
+	0x57: {0x57, "*SRE", ZEROPAGEX, 2, 6, (*CPU).sre},
 	0x5B: {0x5B, "*SRE", ABSOLUTEY, 2, 7, (*CPU).sre},
 	0x5F: {0x5F, "*SRE", ABSOLUTEX, 2, 7, (*CPU).sre},
-	0x63: {0x63, "*RRA", INDIRECTX, 2, 7, (*CPU).rra},
-	0x67: {0x67, "*RRA", ZEROPAGE, 2, 7, (*CPU).rra},
-	0x6F: {0x6F, "*RRA", ABSOLUTE, 2, 7, (*CPU).rra},
-	0x73: {0x73, "*RRA", INDIRECTY, 2, 7, (*CPU).rra},
-	0x77: {0x77, "*RRA", ZEROPAGEX, 2, 7, (*CPU).rra},
+	0x63: {0x63, "*RRA", INDIRECTX, 2, 8, (*CPU).rra},
+	0x67: {0x67, "*RRA", ZEROPAGE, 2, 5, (*CPU).rra},
+	0x6F: {0x6F, "*RRA", ABSOLUTE, 2, 6, (*CPU).rra},
+	0x73: {0x73, "*RRA", INDIRECTY, 2, 8, (*CPU).rra},
+	0x77: {0x77, "*RRA", ZEROPAGEX, 2, 6, (*CPU).rra},
 	0x7B: {0x7B, "*RRA", ABSOLUTEY, 2, 7, (*CPU).rra},
 	0x7F: {0x7F, "*RRA", ABSOLUTEX, 2, 7, (*CPU).rra},
 	// Custom instruction to quit and leave emulator in current state
@@ -349,7 +349,6 @@ func (c *CPU) RunWithCallback(f_call func()) {
 			return
 		}
 		c.bus.Tick(op.cycles)
-
 	}
 }
 
@@ -396,7 +395,7 @@ func (c *CPU) GetNextOpCode() (OpCode, uint16) {
 	}
 	// This is pretty hacked together and should be fixed
 	c.program_counter++
-	c.interpret_mode(op.mode, &addr, false)
+	c.interpret_mode(op.mode, &addr, false, nil)
 	c.program_counter--
 	return op, addr
 }
@@ -557,14 +556,14 @@ func (c *CPU) do_compare(val, reg uint8) {
 
 func (c *CPU) jmp(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	c.program_counter = addr
 }
 
 func (c *CPU) jsr(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	ret_addr := c.program_counter
 	c.push_16(ret_addr)
 	c.program_counter = addr
@@ -637,39 +636,43 @@ func (c *CPU) sei(op OpCode) {
 
 func (c *CPU) sta(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	c.MemWrite(addr, c.register_a)
 }
 
 func (c *CPU) stx(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	c.MemWrite(addr, c.register_x)
 }
 
 func (c *CPU) sty(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	c.MemWrite(addr, c.register_y)
 }
 
 func (c *CPU) cmp(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	val := c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
 	c.do_compare(val, c.register_a)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) cpx(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true)
+	val := c.interpret_mode(op.mode, nil, true, nil)
 	c.program_counter++
 	c.do_compare(val, c.register_x)
 }
 
 func (c *CPU) cpy(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true)
+	val := c.interpret_mode(op.mode, nil, true, nil)
 	c.program_counter++
 	c.do_compare(val, c.register_y)
 }
@@ -692,56 +695,80 @@ func (c *CPU) cli(op OpCode) {
 
 func (c *CPU) bne(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if c.is_zero_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
+func (c *CPU) will_pg_cross(addr uint16) bool {
+	return (c.program_counter & 0xFF00) != (addr & 0xFF00)
+}
+
 func (c *CPU) bmi(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if !c.is_negative_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bvs(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if !c.is_overflow_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bpl(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if c.is_negative_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bvc(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if c.is_overflow_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bit(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true)
+	val := c.interpret_mode(op.mode, nil, true, nil)
 	c.program_counter++
 	c.set_zero_flag(val & c.register_a)
 	c.copy_overflow_flag(val)
@@ -749,7 +776,11 @@ func (c *CPU) bit(op OpCode) {
 }
 
 func (c *CPU) and(op OpCode) {
-	c.do_and(c.interpret_mode(op.mode, nil, true))
+	crossed := false
+	c.do_and(c.interpret_mode(op.mode, nil, true, &crossed))
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) do_and(val uint8) {
@@ -759,20 +790,32 @@ func (c *CPU) do_and(val uint8) {
 }
 
 func (c *CPU) eor(op OpCode) {
-	c.register_a ^= c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	c.register_a ^= c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) ora(op OpCode) {
-	c.register_a |= c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	c.register_a |= c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) sbc(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	val := c.interpret_mode(op.mode, nil, true, &crossed)
 	c.do_sbc(val)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 func (c *CPU) do_sbc(val uint8) {
 	// TODO: Understand what the below actually does properly
@@ -815,7 +858,7 @@ func (c *CPU) asl(op OpCode) {
 		val = c.register_a
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true)
+		val = c.interpret_mode(op.mode, &addr, true, nil)
 		pre_val = val
 		val <<= 1
 		c.MemWrite(addr, val)
@@ -839,7 +882,7 @@ func (c *CPU) lsr(op OpCode) {
 		val = c.register_a
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true)
+		val = c.interpret_mode(op.mode, &addr, true, nil)
 		pre_val = val
 		val >>= 1
 		c.MemWrite(addr, val)
@@ -866,7 +909,7 @@ func (c *CPU) rol(op OpCode) {
 		c.register_a = val
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true)
+		val = c.interpret_mode(op.mode, &addr, true, nil)
 		pre_val = val
 		val <<= 1
 		// Copy carry bit to bit 0
@@ -899,7 +942,7 @@ func (c *CPU) ror(op OpCode) {
 		c.register_a = val
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true)
+		val = c.interpret_mode(op.mode, &addr, true, nil)
 		pre_val = val
 		val >>= 1
 		val = carry_and | (val & 0b0111_1111)
@@ -920,13 +963,17 @@ func (c *CPU) nop(op OpCode) {
 }
 
 func (c *CPU) skb(op OpCode) {
-	c.interpret_mode(op.mode, nil, true)
+	c.interpret_mode(op.mode, nil, true, nil)
 	c.program_counter++
 }
 
 func (c *CPU) ign(op OpCode) {
-	c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) lax(op OpCode) {
@@ -936,7 +983,7 @@ func (c *CPU) lax(op OpCode) {
 
 func (c *CPU) dcp(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	val--
 	c.MemWrite(addr, val)
@@ -946,7 +993,7 @@ func (c *CPU) dcp(op OpCode) {
 
 func (c *CPU) isc(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	val++
 	c.MemWrite(addr, val)
 	c.do_sbc(val)
@@ -954,14 +1001,14 @@ func (c *CPU) isc(op OpCode) {
 
 func (c *CPU) sax(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	c.MemWrite(addr, c.register_a&c.register_x)
 }
 
 func (c *CPU) slo(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	pre_val := val
 	val <<= 1
 	c.MemWrite(addr, val)
@@ -977,7 +1024,7 @@ func (c *CPU) slo(op OpCode) {
 
 func (c *CPU) sre(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	pre_val := val
 	val >>= 1
 	c.MemWrite(addr, val)
@@ -997,7 +1044,7 @@ func (c *CPU) rra(op OpCode) {
 	if c.is_carry_set() {
 		carry_and = 0b1000_0000
 	}
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	pre_val := val
 	val >>= 1
 	val = carry_and | (val & 0b0111_1111)
@@ -1018,7 +1065,7 @@ func (c *CPU) rra(op OpCode) {
 
 func (c *CPU) rla(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 
 	// ROL
 	oldCarry := (c.status >> 0) & 1
@@ -1040,7 +1087,7 @@ func (c *CPU) rla(op OpCode) {
 
 func (c *CPU) shx(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	hi_b := uint8(addr >> 8)
 	wr_data := c.register_x & (hi_b + 1)
 	c.program_counter++
@@ -1049,7 +1096,7 @@ func (c *CPU) shx(op OpCode) {
 
 func (c *CPU) shy(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
 	hi_b := uint8(addr >> 8)
 	wr_data := c.register_y & (hi_b + 1)
 	c.program_counter++
@@ -1061,36 +1108,48 @@ func (c *CPU) sha(op OpCode) {
 
 func (c *CPU) bcc(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if c.is_carry_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bcs(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if !c.is_carry_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) beq(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true)
+	c.interpret_mode(op.mode, &addr, true, nil)
+	c.program_counter++
 	if !c.is_zero_set() {
-		c.program_counter++
 		return
+	}
+	c.bus.cycles++
+	if c.will_pg_cross(addr) {
+		c.bus.cycles++
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) adc(op OpCode) {
-	mem_val := c.interpret_mode(op.mode, nil, true)
+	mem_val := c.interpret_mode(op.mode, nil, true, nil)
 	val := c.add_carry_bit(mem_val)
 	result := val + c.register_a
 	c.decide_carry_bit(result, c.register_a)
@@ -1101,21 +1160,33 @@ func (c *CPU) adc(op OpCode) {
 }
 
 func (c *CPU) lda(op OpCode) {
-	c.register_a = c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	c.register_a = c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) ldy(op OpCode) {
-	c.register_y = c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	c.register_y = c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_y)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) ldx(op OpCode) {
-	c.register_x = c.interpret_mode(op.mode, nil, true)
+	crossed := false
+	c.register_x = c.interpret_mode(op.mode, nil, true, &crossed)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_x)
+	if crossed {
+		c.bus.cycles++
+	}
 }
 
 func (c *CPU) tax(op OpCode) {
@@ -1150,7 +1221,7 @@ func (c *CPU) iny(op OpCode) {
 
 func (c *CPU) dec(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	val--
 	c.MemWrite(addr, val)
@@ -1159,7 +1230,7 @@ func (c *CPU) dec(op OpCode) {
 
 func (c *CPU) inc(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true)
+	val := c.interpret_mode(op.mode, &addr, true, nil)
 	c.program_counter++
 	val++
 	c.MemWrite(addr, val)
@@ -1176,7 +1247,7 @@ func (c *CPU) dey(op OpCode) {
 	c.set_zero_and_negative_flag(c.register_y)
 }
 
-func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool) uint8 {
+func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool, did_cross *bool) uint8 {
 	var val uint8
 	var addr uint16
 	var incr_count uint16
@@ -1204,11 +1275,17 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool) u
 		in := c.MemRead16(c.program_counter)
 		incr_count++
 		addr = in + uint16(c.register_x)
+		if did_cross != nil && in&0xFF00 != addr&0xFF00 {
+			*did_cross = true
+		}
 		val = c.MemRead(addr)
 	case ABSOLUTEY:
 		in := c.MemRead16(c.program_counter)
 		incr_count++
 		addr = in + uint16(c.register_y)
+		if did_cross != nil && in&0xFF00 != addr&0xFF00 {
+			*did_cross = true
+		}
 		val = c.MemRead(addr)
 	case INDIRECTX:
 		in := next_val + c.register_x
@@ -1220,6 +1297,9 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool) u
 		final_target := target + uint16(c.register_y)
 		val = c.MemRead(final_target)
 		addr = final_target
+		if did_cross != nil && target&0xFF00 != final_target&0xFF00 {
+			*did_cross = true
+		}
 	case INDIRECT:
 		ptr := c.MemRead16(c.program_counter)
 		lo := c.MemRead(ptr)

@@ -87,9 +87,10 @@ func TraceCPU(c *CPU) string {
 	}
 	instr_str, _ := padSpaces(instr_part, instr_len)
 	assem_str, _ := padSpaces(assem_part, assem_len)
-	ret = fmt.Sprintf("%04X  %s%sA:%02X X:%02X Y:%02X P:%02X SP:%02X",
+	ret = fmt.Sprintf("%04X  %s%sA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d",
 		c.ProgramCounter(), instr_str, assem_str,
 		c.GetRegisterA(), c.GetRegisterX(), c.GetRegisterY(), c.GetStatus(), c.GetStackPointer(),
+		c.bus.cycles,
 	)
 	return ret
 }

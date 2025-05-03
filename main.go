@@ -110,7 +110,6 @@ func (e *Emulator) Update() error {
 	}
 	copyToBuffer(e.frame, e)
 	fmt.Println("Hit draw block")
-	// e.texture.WritePixels(e.framebuffer)
 	return nil
 }
 
