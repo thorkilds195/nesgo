@@ -9,7 +9,7 @@ type Bus struct {
 	cpu_vram     [2048]uint8
 	rom          *Rom
 	ppu          *PPU
-	cycles       uint32
+	cycles       uint
 	gameCallback func(*PPU)
 }
 
@@ -23,11 +23,9 @@ func InitBus(r *Rom, c func(*PPU)) *Bus {
 }
 
 func (b *Bus) Tick(cycles uint8) {
-	b.cycles += uint32(cycles)
-	nmiBefore := b.PollNMIStatus()
-	b.ppu.Tick(cycles * 3)
-	nmiAfter := b.PollNMIStatus()
-	if !nmiBefore && nmiAfter {
+	b.cycles += uint(cycles)
+	newFrame := b.ppu.Tick(cycles * 3)
+	if newFrame {
 		b.gameCallback(b.ppu)
 	}
 }
@@ -99,8 +97,8 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 	}
 }
 
-func (b *Bus) PollNMIStatus() bool {
-	return b.ppu.nmi_interrupt
+func (b *Bus) PollNMIStatus() *uint8 {
+	return b.ppu.PollNMIStatus()
 }
 
 func (b *Bus) readPgrRom(addr uint16) uint8 {

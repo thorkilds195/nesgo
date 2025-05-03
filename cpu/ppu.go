@@ -15,7 +15,7 @@ type PPU struct {
 	data_buffer   uint8
 	cycles        uint32
 	scanline      uint32
-	nmi_interrupt bool
+	nmi_interrupt *uint8
 }
 
 func NewPPU(chr_rom []uint8, mirroring Mirroring) *PPU {
@@ -48,31 +48,38 @@ func (p *PPU) Tick(cycles uint8) bool {
 		p.scanline += 1
 		if p.scanline == 241 {
 			p.status.setVblank()
-			p.status.setSprite0Flag()
+			p.status.clearSprite0Flag()
 			if p.ctrl.GenerateVBlankNMI() {
-				p.nmi_interrupt = true
+				var v uint8 = 1
+				p.nmi_interrupt = &v
 			}
 		}
 		if p.scanline >= 262 {
 			p.scanline = 0
-			p.nmi_interrupt = false
-			p.status.resetVblank()
+			p.nmi_interrupt = nil
 			p.status.clearSprite0Flag()
+			p.status.resetVblank()
 			return true
 		}
 	}
 	return false
 }
 
-func (p *PPU) PollNMIStatus(v uint8) bool {
-	return p.nmi_interrupt
+func (p *PPU) PollNMIStatus() *uint8 {
+	if p.nmi_interrupt != nil {
+		ret := *p.nmi_interrupt
+		p.nmi_interrupt = nil
+		return &ret
+	}
+	return nil
 }
 
 func (p *PPU) WriteToPPUCtrl(v uint8) {
 	before_nmi_status := p.ctrl.GenerateVBlankNMI()
 	p.ctrl.Update(v)
 	if !before_nmi_status && p.ctrl.GenerateVBlankNMI() && p.status.isVblankSet() {
-		p.nmi_interrupt = true
+		var val uint8 = 1
+		p.nmi_interrupt = &val
 	}
 }
 

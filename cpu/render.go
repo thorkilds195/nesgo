@@ -1,7 +1,5 @@
 package cpu
 
-import "fmt"
-
 const WITDH = 256
 const HEIGHT = 240
 
@@ -32,9 +30,6 @@ func (f *Frame) Render(p *PPU) {
 		tile_column := i % 32
 		tile_row := i / 32
 		tile := p.chr_rom[(bank + tile_nr*16):(bank + tile_nr*16 + 16)]
-		if tile_nr > 0 {
-			fmt.Println(tile_nr)
-		}
 		for y := 0; y <= 7; y++ {
 			upper := tile[y]
 			lower := tile[y+8]
@@ -47,13 +42,10 @@ func (f *Frame) Render(p *PPU) {
 				case 0:
 					rgb = SYSTEM_PALLETE[0x01]
 				case 1:
-					fmt.Println("Hit other")
 					rgb = SYSTEM_PALLETE[0x23]
 				case 2:
-					fmt.Println("Hit other")
 					rgb = SYSTEM_PALLETE[0x27]
 				case 3:
-					fmt.Println("Hit other")
 					rgb = SYSTEM_PALLETE[0x30]
 				default:
 					panic("Not valid rgb rom")

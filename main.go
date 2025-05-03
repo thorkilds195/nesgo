@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"nesgo/cpu"
 	"os"
@@ -109,7 +108,6 @@ func (e *Emulator) Update() error {
 		}
 	}
 	copyToBuffer(e.frame, e)
-	fmt.Println("Hit draw block")
 	return nil
 }
 

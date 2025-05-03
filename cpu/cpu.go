@@ -335,7 +335,7 @@ func (c *CPU) RunWithCallback(f_call func()) {
 	var op OpCode
 	var ok bool
 	for {
-		if c.bus.PollNMIStatus() {
+		if c.bus.PollNMIStatus() != nil {
 			c.interrupt_nmi()
 		}
 		f_call()
@@ -366,7 +366,7 @@ func (c *CPU) Load(program []uint8) {
 }
 
 func (c *CPU) Step(f_call func()) bool {
-	if c.bus.PollNMIStatus() {
+	if c.bus.PollNMIStatus() != nil {
 		c.interrupt_nmi()
 	}
 	f_call()
@@ -395,7 +395,7 @@ func (c *CPU) GetNextOpCode() (OpCode, uint16) {
 	}
 	// This is pretty hacked together and should be fixed
 	c.program_counter++
-	c.interpret_mode(op.mode, &addr, false, nil)
+	c.interpret_mode(op.mode, &addr, false, nil, true)
 	c.program_counter--
 	return op, addr
 }
@@ -406,6 +406,7 @@ func (c *CPU) interrupt_nmi() {
 	c.push(status)
 	c.status |= 0b0000_0100
 	c.program_counter = c.MemRead16(0xFFFA)
+	c.bus.Tick(2)
 }
 
 func (c *CPU) push(val uint8) {
@@ -556,14 +557,14 @@ func (c *CPU) do_compare(val, reg uint8) {
 
 func (c *CPU) jmp(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	c.program_counter = addr
 }
 
 func (c *CPU) jsr(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	ret_addr := c.program_counter
 	c.push_16(ret_addr)
 	c.program_counter = addr
@@ -636,43 +637,43 @@ func (c *CPU) sei(op OpCode) {
 
 func (c *CPU) sta(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	c.MemWrite(addr, c.register_a)
 }
 
 func (c *CPU) stx(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	c.MemWrite(addr, c.register_x)
 }
 
 func (c *CPU) sty(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	c.MemWrite(addr, c.register_y)
 }
 
 func (c *CPU) cmp(op OpCode) {
 	crossed := false
-	val := c.interpret_mode(op.mode, nil, true, &crossed)
+	val := c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.program_counter++
 	c.do_compare(val, c.register_a)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
 func (c *CPU) cpx(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true, nil)
+	val := c.interpret_mode(op.mode, nil, true, nil, false)
 	c.program_counter++
 	c.do_compare(val, c.register_x)
 }
 
 func (c *CPU) cpy(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true, nil)
+	val := c.interpret_mode(op.mode, nil, true, nil, false)
 	c.program_counter++
 	c.do_compare(val, c.register_y)
 }
@@ -695,14 +696,14 @@ func (c *CPU) cli(op OpCode) {
 
 func (c *CPU) bne(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if c.is_zero_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -713,62 +714,62 @@ func (c *CPU) will_pg_cross(addr uint16) bool {
 
 func (c *CPU) bmi(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if !c.is_negative_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bvs(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if !c.is_overflow_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bpl(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if c.is_negative_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bvc(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if c.is_overflow_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bit(op OpCode) {
-	val := c.interpret_mode(op.mode, nil, true, nil)
+	val := c.interpret_mode(op.mode, nil, true, nil, false)
 	c.program_counter++
 	c.set_zero_flag(val & c.register_a)
 	c.copy_overflow_flag(val)
@@ -777,9 +778,9 @@ func (c *CPU) bit(op OpCode) {
 
 func (c *CPU) and(op OpCode) {
 	crossed := false
-	c.do_and(c.interpret_mode(op.mode, nil, true, &crossed))
+	c.do_and(c.interpret_mode(op.mode, nil, true, &crossed, false))
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
@@ -791,30 +792,30 @@ func (c *CPU) do_and(val uint8) {
 
 func (c *CPU) eor(op OpCode) {
 	crossed := false
-	c.register_a ^= c.interpret_mode(op.mode, nil, true, &crossed)
+	c.register_a ^= c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
 func (c *CPU) ora(op OpCode) {
 	crossed := false
-	c.register_a |= c.interpret_mode(op.mode, nil, true, &crossed)
+	c.register_a |= c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
 func (c *CPU) sbc(op OpCode) {
 	crossed := false
-	val := c.interpret_mode(op.mode, nil, true, &crossed)
+	val := c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.do_sbc(val)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 func (c *CPU) do_sbc(val uint8) {
@@ -858,7 +859,7 @@ func (c *CPU) asl(op OpCode) {
 		val = c.register_a
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true, nil)
+		val = c.interpret_mode(op.mode, &addr, true, nil, false)
 		pre_val = val
 		val <<= 1
 		c.MemWrite(addr, val)
@@ -882,7 +883,7 @@ func (c *CPU) lsr(op OpCode) {
 		val = c.register_a
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true, nil)
+		val = c.interpret_mode(op.mode, &addr, true, nil, false)
 		pre_val = val
 		val >>= 1
 		c.MemWrite(addr, val)
@@ -909,7 +910,7 @@ func (c *CPU) rol(op OpCode) {
 		c.register_a = val
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true, nil)
+		val = c.interpret_mode(op.mode, &addr, true, nil, false)
 		pre_val = val
 		val <<= 1
 		// Copy carry bit to bit 0
@@ -942,7 +943,7 @@ func (c *CPU) ror(op OpCode) {
 		c.register_a = val
 	} else {
 		var addr uint16
-		val = c.interpret_mode(op.mode, &addr, true, nil)
+		val = c.interpret_mode(op.mode, &addr, true, nil, false)
 		pre_val = val
 		val >>= 1
 		val = carry_and | (val & 0b0111_1111)
@@ -963,16 +964,16 @@ func (c *CPU) nop(op OpCode) {
 }
 
 func (c *CPU) skb(op OpCode) {
-	c.interpret_mode(op.mode, nil, true, nil)
+	c.interpret_mode(op.mode, nil, true, nil, true)
 	c.program_counter++
 }
 
 func (c *CPU) ign(op OpCode) {
 	crossed := false
-	c.interpret_mode(op.mode, nil, true, &crossed)
+	c.interpret_mode(op.mode, nil, true, &crossed, true)
 	c.program_counter++
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
@@ -983,7 +984,7 @@ func (c *CPU) lax(op OpCode) {
 
 func (c *CPU) dcp(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	c.program_counter++
 	val--
 	c.MemWrite(addr, val)
@@ -993,7 +994,7 @@ func (c *CPU) dcp(op OpCode) {
 
 func (c *CPU) isc(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	val++
 	c.MemWrite(addr, val)
 	c.do_sbc(val)
@@ -1001,14 +1002,14 @@ func (c *CPU) isc(op OpCode) {
 
 func (c *CPU) sax(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	c.MemWrite(addr, c.register_a&c.register_x)
 }
 
 func (c *CPU) slo(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	pre_val := val
 	val <<= 1
 	c.MemWrite(addr, val)
@@ -1024,7 +1025,7 @@ func (c *CPU) slo(op OpCode) {
 
 func (c *CPU) sre(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	pre_val := val
 	val >>= 1
 	c.MemWrite(addr, val)
@@ -1044,7 +1045,7 @@ func (c *CPU) rra(op OpCode) {
 	if c.is_carry_set() {
 		carry_and = 0b1000_0000
 	}
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	pre_val := val
 	val >>= 1
 	val = carry_and | (val & 0b0111_1111)
@@ -1065,7 +1066,7 @@ func (c *CPU) rra(op OpCode) {
 
 func (c *CPU) rla(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 
 	// ROL
 	oldCarry := (c.status >> 0) & 1
@@ -1087,7 +1088,7 @@ func (c *CPU) rla(op OpCode) {
 
 func (c *CPU) shx(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	hi_b := uint8(addr >> 8)
 	wr_data := c.register_x & (hi_b + 1)
 	c.program_counter++
@@ -1096,7 +1097,7 @@ func (c *CPU) shx(op OpCode) {
 
 func (c *CPU) shy(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	hi_b := uint8(addr >> 8)
 	wr_data := c.register_y & (hi_b + 1)
 	c.program_counter++
@@ -1108,48 +1109,48 @@ func (c *CPU) sha(op OpCode) {
 
 func (c *CPU) bcc(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if c.is_carry_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) bcs(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if !c.is_carry_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) beq(op OpCode) {
 	var addr uint16
-	c.interpret_mode(op.mode, &addr, true, nil)
+	c.interpret_mode(op.mode, &addr, true, nil, true)
 	c.program_counter++
 	if !c.is_zero_set() {
 		return
 	}
-	c.bus.cycles++
+	c.bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 	c.program_counter = addr
 }
 
 func (c *CPU) adc(op OpCode) {
-	mem_val := c.interpret_mode(op.mode, nil, true, nil)
+	mem_val := c.interpret_mode(op.mode, nil, true, nil, false)
 	val := c.add_carry_bit(mem_val)
 	result := val + c.register_a
 	c.decide_carry_bit(result, c.register_a)
@@ -1161,31 +1162,31 @@ func (c *CPU) adc(op OpCode) {
 
 func (c *CPU) lda(op OpCode) {
 	crossed := false
-	c.register_a = c.interpret_mode(op.mode, nil, true, &crossed)
+	c.register_a = c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
 func (c *CPU) ldy(op OpCode) {
 	crossed := false
-	c.register_y = c.interpret_mode(op.mode, nil, true, &crossed)
+	c.register_y = c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_y)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
 func (c *CPU) ldx(op OpCode) {
 	crossed := false
-	c.register_x = c.interpret_mode(op.mode, nil, true, &crossed)
+	c.register_x = c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_x)
 	if crossed {
-		c.bus.cycles++
+		c.bus.Tick(1)
 	}
 }
 
@@ -1221,7 +1222,7 @@ func (c *CPU) iny(op OpCode) {
 
 func (c *CPU) dec(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	c.program_counter++
 	val--
 	c.MemWrite(addr, val)
@@ -1230,7 +1231,7 @@ func (c *CPU) dec(op OpCode) {
 
 func (c *CPU) inc(op OpCode) {
 	var addr uint16
-	val := c.interpret_mode(op.mode, &addr, true, nil)
+	val := c.interpret_mode(op.mode, &addr, true, nil, false)
 	c.program_counter++
 	val++
 	c.MemWrite(addr, val)
@@ -1247,7 +1248,7 @@ func (c *CPU) dey(op OpCode) {
 	c.set_zero_and_negative_flag(c.register_y)
 }
 
-func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool, did_cross *bool) uint8 {
+func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool, did_cross *bool, no_read bool) uint8 {
 	var val uint8
 	var addr uint16
 	var incr_count uint16
@@ -1260,17 +1261,25 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool, d
 		addr = c.program_counter + uint16(int16(int8(val))) + 1
 	case ZEROPAGE:
 		addr = uint16(next_val)
-		val = c.MemRead(addr)
+		if !no_read {
+			val = c.MemRead(addr)
+		}
 	case ZEROPAGEX:
 		addr = uint16(next_val + c.register_x)
-		val = c.MemRead(addr)
+		if !no_read {
+			val = c.MemRead(addr)
+		}
 	case ZEROPAGEY:
 		addr = uint16(next_val + c.register_y)
-		val = c.MemRead(addr)
+		if !no_read {
+			val = c.MemRead(addr)
+		}
 	case ABSOLUTE:
 		addr = c.MemRead16(c.program_counter)
 		incr_count++
-		val = c.MemRead(addr)
+		if !no_read {
+			val = c.MemRead(addr)
+		}
 	case ABSOLUTEX:
 		in := c.MemRead16(c.program_counter)
 		incr_count++
@@ -1278,7 +1287,9 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool, d
 		if did_cross != nil && in&0xFF00 != addr&0xFF00 {
 			*did_cross = true
 		}
-		val = c.MemRead(addr)
+		if !no_read {
+			val = c.MemRead(addr)
+		}
 	case ABSOLUTEY:
 		in := c.MemRead16(c.program_counter)
 		incr_count++
@@ -1286,16 +1297,22 @@ func (c *CPU) interpret_mode(m AddressingMode, read_adr *uint16, incr_pc bool, d
 		if did_cross != nil && in&0xFF00 != addr&0xFF00 {
 			*did_cross = true
 		}
-		val = c.MemRead(addr)
+		if !no_read {
+			val = c.MemRead(addr)
+		}
 	case INDIRECTX:
 		in := next_val + c.register_x
 		target := c.mem_read_16_zero(in)
-		val = c.MemRead(target)
+		if !no_read {
+			val = c.MemRead(target)
+		}
 		addr = target
 	case INDIRECTY:
 		target := c.mem_read_16_zero(next_val)
 		final_target := target + uint16(c.register_y)
-		val = c.MemRead(final_target)
+		if !no_read {
+			val = c.MemRead(final_target)
+		}
 		addr = final_target
 		if did_cross != nil && target&0xFF00 != final_target&0xFF00 {
 			*did_cross = true
