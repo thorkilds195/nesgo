@@ -173,7 +173,7 @@ func TestCompareAgainstNesLog(t *testing.T) {
 		answer = append(answer, scanner.Text())
 	}
 	r := InitRom(dat)
-	b := InitBus(r)
+	b := InitBus(r, func(*PPU) {})
 	c := InitCPU(b)
 	c.Reset()
 	c.program_counter = 0xC000

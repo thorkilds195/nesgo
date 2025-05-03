@@ -96,7 +96,7 @@ func (p *PPU) ReadStatusRegister() uint8 {
 }
 
 func (p *PPU) incrVramAddr() {
-	p.ctrl.VramAddIncrement()
+	p.addr.increment(p.ctrl.VramAddIncrement())
 }
 
 func (p *PPU) WriteToData(v uint8) {
@@ -116,7 +116,7 @@ func (p *PPU) WriteToData(v uint8) {
 	} else {
 		panic("Invalid address passed")
 	}
-	p.ctrl.VramAddIncrement()
+	p.incrVramAddr()
 }
 
 func (p *PPU) ReadData() uint8 {
@@ -177,9 +177,9 @@ func (p *PPU) mirrorVramAddr(addr uint16) uint16 {
 	if p.mirroring == VERTICAL && (name_tbl == 2 || name_tbl == 3) {
 		return vram_idx - 0x800
 	} else if p.mirroring == HORIZONTAL {
-		if name_tbl == 2 || name_tbl == 3 {
+		if name_tbl == 1 || name_tbl == 2 {
 			return vram_idx - 0x400
-		} else if name_tbl == 1 {
+		} else if name_tbl == 3 {
 			return vram_idx - 0x800
 		}
 	}
@@ -212,7 +212,7 @@ func (a *AddressRegister) Update(v uint8) {
 		a.value[1] = v
 	}
 	if a.get() > 0x3FFF {
-		a.set(a.get() % 0b11111111111111)
+		a.set(a.get() & 0b11111111111111)
 	}
 	a.is_hi = !a.is_hi
 }
@@ -221,14 +221,14 @@ func (a *AddressRegister) get() uint16 {
 	return (uint16(a.value[1]) | (uint16(a.value[0]) << 8))
 }
 
-func (a *AddressRegister) increment() {
+func (a *AddressRegister) increment(inc uint8) {
 	lo := a.value[1]
-	a.value[1]++
+	a.value[1] += inc
 	if lo > a.value[1] {
 		a.value[0]++
 	}
 	if a.get() > 0x3FFF {
-		a.set(a.get() % 0b11111111111111)
+		a.set(a.get() & 0b11111111111111)
 	}
 }
 
@@ -257,6 +257,22 @@ func (c *ControlRegister) VramAddIncrement() uint8 {
 
 func (c *ControlRegister) Update(v uint8) {
 	c.value = v
+}
+
+func (c *ControlRegister) BnkdPatternAddress() uint16 {
+	if (c.value & 0b0001_0000) == 0 {
+		return 0
+	} else {
+		return 0x1000
+	}
+}
+
+func (c *ControlRegister) SprtPatternAddress() uint16 {
+	if (c.value & 0b0000_1000) == 0 {
+		return 0
+	} else {
+		return 0x1000
+	}
 }
 
 type MaskRegister struct {

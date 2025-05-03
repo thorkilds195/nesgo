@@ -6,23 +6,30 @@ const PPU_REGISTERS uint16 = 0x2000
 const PPU_REGISTERS_MIRRORS_END uint16 = 0x3FFF
 
 type Bus struct {
-	cpu_vram [2048]uint8
-	rom      *Rom
-	ppu      *PPU
-	cycles   uint32
+	cpu_vram     [2048]uint8
+	rom          *Rom
+	ppu          *PPU
+	cycles       uint32
+	gameCallback func(*PPU)
 }
 
-func InitBus(r *Rom) *Bus {
+func InitBus(r *Rom, c func(*PPU)) *Bus {
 	p := NewPPU(r.chr_rom, r.screen_mirroring)
 	return &Bus{
-		rom: r,
-		ppu: p,
+		rom:          r,
+		ppu:          p,
+		gameCallback: c,
 	}
 }
 
 func (b *Bus) Tick(cycles uint8) {
 	b.cycles += uint32(cycles)
+	nmiBefore := b.PollNMIStatus()
 	b.ppu.Tick(cycles * 3)
+	nmiAfter := b.PollNMIStatus()
+	if !nmiBefore && nmiAfter {
+		b.gameCallback(b.ppu)
+	}
 }
 
 func (b *Bus) MemRead(addr uint16) uint8 {
@@ -56,7 +63,7 @@ func (b *Bus) MemRead(addr uint16) uint8 {
 func (b *Bus) MemWrite(addr uint16, val uint8) {
 
 	if addr >= RAM && addr <= RAM_MIRRORS_END {
-		mirr_address_down := addr & 0b00000111_11111111
+		mirr_address_down := addr & 0b11111111111
 		b.cpu_vram[mirr_address_down] = val
 	} else if addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END {
 		switch addr {
@@ -64,6 +71,8 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 			b.ppu.WriteToPPUCtrl(val)
 		case 0x2001:
 			b.ppu.WriteToMask(val)
+		case 0x2002:
+			panic("Trying to write to ppu status register")
 		case 0x2003:
 			b.ppu.WriteToOAMAddr(val)
 		case 0x2004:
@@ -74,6 +83,13 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 			b.ppu.WriteToPPUAddr(val)
 		case 0x2007:
 			b.ppu.WriteToData(val)
+		case 0x4014:
+			buf := [256]uint8{}
+			hi := uint16(val) << 8
+			for i := range buf {
+				buf[i] = b.MemRead(hi + uint16(i))
+			}
+			b.ppu.WriteToOAMDMA(&buf)
 		default:
 			mirror_down_addr := addr & 0b00100000_00000111
 			b.MemWrite(mirror_down_addr, val)

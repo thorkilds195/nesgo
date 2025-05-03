@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"math/rand"
 	"nesgo/cpu"
 	"os"
 
@@ -75,6 +75,8 @@ type Emulator struct {
 	framebuffer []byte
 	cpu         *cpu.CPU
 	texture     *ebiten.Image
+	frame       *cpu.Frame
+	drawTime    *bool
 }
 
 func dumpFramebuffer(fb []byte) {
@@ -94,21 +96,21 @@ func dumpFramebuffer(fb []byte) {
 }
 
 func (e *Emulator) Update() error {
-	// e.texture.WritePixels(e.framebuffer)
-	return nil
 	handleUserInput(e.cpu)
-	for i := 0; i < 100; i++ {
-		alive := e.cpu.Step(func() {
-			e.cpu.MemWrite(0xFE, uint8(rand.Intn(15)+1))
-		})
+	for {
+		alive := e.cpu.Step(func() {})
 
 		if !alive {
 			panic("No longer alive")
 		}
+		if *e.drawTime {
+			*e.drawTime = false
+			break
+		}
 	}
-	if readScreenState(e.cpu, e) {
-		e.texture.WritePixels(e.framebuffer)
-	}
+	copyToBuffer(e.frame, e)
+	fmt.Println("Hit draw block")
+	// e.texture.WritePixels(e.framebuffer)
 	return nil
 }
 
@@ -121,15 +123,16 @@ func (e *Emulator) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return screenWidth, screenHeight
 }
 
-func NewEmulator(c *cpu.CPU) *Emulator {
+func NewEmulator(c *cpu.CPU, f *cpu.Frame, callTrack *bool) *Emulator {
 	fb := make([]byte, screenWidth*screenHeight*4)
 	c.Reset()
 	texture := ebiten.NewImage(screenWidth, screenHeight)
-
 	return &Emulator{
 		framebuffer: fb,
 		cpu:         c,
 		texture:     texture,
+		frame:       f,
+		drawTime:    callTrack,
 	}
 }
 
@@ -183,12 +186,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	var callTrack bool
+	frame := cpu.NewFrame()
 	rom := cpu.InitRom(dat)
-	bus := cpu.InitBus(rom)
+	bus := cpu.InitBus(rom, func(p *cpu.PPU) {
+		frame.Render(p)
+		callTrack = true
+	},
+	)
 	cpu := cpu.InitCPU(bus)
-	frame := showTileBank(rom.GetCHRRom(), 1)
-	game := NewEmulator(cpu)
-	copyToBuffer(frame, game)
+	game := NewEmulator(cpu, frame, &callTrack)
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

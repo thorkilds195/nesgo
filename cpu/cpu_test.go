@@ -56,7 +56,7 @@ func setupTestBus(program []uint8) *Bus {
 	mem[0xFFFE-0x8000+16] = 0x02
 	mem[0xFFFF-0x8000+16] = 0x80
 	rom := InitRom(mem)
-	bus := InitBus(rom)
+	bus := InitBus(rom, func(*PPU) {})
 	return bus
 }
 

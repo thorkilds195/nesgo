@@ -7,7 +7,7 @@ import (
 type AddressingMode uint8
 
 const STACK_RESET uint8 = 0xFD
-const PROGRAM_START uint16 = 0xC000
+const PROGRAM_START uint16 = 0x8000
 
 const (
 	IMMEDIATE AddressingMode = iota
@@ -367,15 +367,19 @@ func (c *CPU) Load(program []uint8) {
 }
 
 func (c *CPU) Step(f_call func()) bool {
+	if c.bus.PollNMIStatus() {
+		c.interrupt_nmi()
+	}
 	f_call()
 	opcode := c.MemRead(c.program_counter)
 	c.program_counter++
 	op, ok := OPTABLE[opcode]
-	//fmt.Println(op.name, op.mode)
+	// fmt.Println(op.name, op.mode)
 	if !ok {
 		panic(fmt.Sprintf("Unknown opcode: %x", opcode))
 	}
 	op.f_call(c, op)
+	c.bus.Tick(op.cycles)
 	return opcode != 0x00 && opcode != 0x02
 }
 
@@ -398,7 +402,11 @@ func (c *CPU) GetNextOpCode() (OpCode, uint16) {
 }
 
 func (c *CPU) interrupt_nmi() {
-	c.doInterrupt(0xFFFA)
+	c.push_16(c.program_counter)
+	status := c.status | 0b0011_0000
+	c.push(status)
+	c.status |= 0b0000_0100
+	c.program_counter = c.MemRead16(0xFFFA)
 }
 
 func (c *CPU) push(val uint8) {
