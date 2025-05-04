@@ -24,29 +24,31 @@ func (f *Frame) SetPixel(x uint32, y uint32, rgb RGB) {
 }
 
 func (f *Frame) Render(p *PPU) {
+	// Render background
 	bank := p.ctrl.BnkdPatternAddress()
 	for i := 0; i < 0x3C0; i++ {
 		tile_nr := uint16(p.vram[i])
 		tile_column := i % 32
 		tile_row := i / 32
 		tile := p.chr_rom[(bank + tile_nr*16):(bank + tile_nr*16 + 16)]
+		palette := bgPallete(p, uint(tile_column), uint(tile_row))
 		for y := 0; y <= 7; y++ {
 			upper := tile[y]
 			lower := tile[y+8]
 			for x := 7; x >= 0; x-- {
-				value := (1&upper)<<1 | (1 & lower)
+				value := (1&lower)<<1 | (1 & upper)
 				upper = upper >> 1
 				lower = lower >> 1
 				var rgb RGB
 				switch value {
 				case 0:
-					rgb = SYSTEM_PALLETE[0x01]
+					rgb = SYSTEM_PALLETE[palette[0]]
 				case 1:
-					rgb = SYSTEM_PALLETE[0x23]
+					rgb = SYSTEM_PALLETE[palette[1]]
 				case 2:
-					rgb = SYSTEM_PALLETE[0x27]
+					rgb = SYSTEM_PALLETE[palette[2]]
 				case 3:
-					rgb = SYSTEM_PALLETE[0x30]
+					rgb = SYSTEM_PALLETE[palette[3]]
 				default:
 					panic("Not valid rgb rom")
 				}
@@ -54,12 +56,11 @@ func (f *Frame) Render(p *PPU) {
 			}
 		}
 	}
-	return
+	// Render sprites
 	for i := len(p.oam_data) - 4; i >= 0; i -= 4 {
 		tile_idx := uint16(p.oam_data[i+1])
 		tile_x := int(p.oam_data[i+3])
 		tile_y := int(p.oam_data[i])
-
 		flip_vertical := false
 		if p.oam_data[i+2]>>7&1 == 1 {
 			flip_vertical = true
@@ -68,6 +69,8 @@ func (f *Frame) Render(p *PPU) {
 		if p.oam_data[i+2]>>6&1 == 1 {
 			flip_horizontal = true
 		}
+		paletteIdx := p.oam_data[i+2] & 0b11
+		sprPallete := spritePallete(p, paletteIdx)
 		bank := p.ctrl.SprtPatternAddress()
 
 		tile := p.chr_rom[(bank + tile_idx*16):(bank + (tile_idx)*16 + 16)]
@@ -80,17 +83,21 @@ func (f *Frame) Render(p *PPU) {
 				upper = upper >> 1
 				lower = lower >> 1
 				var rgb RGB
+				skip := false
 				switch value {
 				case 0:
-					continue
+					skip = true
 				case 1:
-					rgb = SYSTEM_PALLETE[0x23]
+					rgb = SYSTEM_PALLETE[sprPallete[1]]
 				case 2:
-					rgb = SYSTEM_PALLETE[0x27]
+					rgb = SYSTEM_PALLETE[sprPallete[2]]
 				case 3:
-					rgb = SYSTEM_PALLETE[0x30]
+					rgb = SYSTEM_PALLETE[sprPallete[3]]
 				default:
 					panic("Not valid rgb rom")
+				}
+				if skip {
+					continue
 				}
 				if !flip_horizontal && !flip_vertical {
 					f.SetPixel(uint32(tile_x+x), uint32(tile_y+y), rgb)
@@ -104,4 +111,28 @@ func (f *Frame) Render(p *PPU) {
 			}
 		}
 	}
+}
+
+func bgPallete(p *PPU, tile_col uint, tile_row uint) [4]uint8 {
+	tableIdx := tile_row/4*8 + tile_col/4
+	attrByte := p.vram[0x3C0+tableIdx]
+	col_idx := tile_col % 4 / 2
+	row_idx := tile_row % 4 / 2
+	var palletIdx uint8
+	if col_idx == 0 && row_idx == 0 {
+		palletIdx = attrByte & 0b11
+	} else if col_idx == 1 && row_idx == 0 {
+		palletIdx = (attrByte >> 2) & 0b11
+	} else if col_idx == 0 && row_idx == 1 {
+		palletIdx = (attrByte >> 4) & 0b11
+	} else if col_idx == 1 && row_idx == 1 {
+		palletIdx = (attrByte >> 6) & 0b11
+	}
+	palleteStart := 1 + uint(palletIdx)*4
+	return [4]uint8{p.palette_table[0], p.palette_table[palleteStart], p.palette_table[palleteStart+1], p.palette_table[palleteStart+2]}
+}
+
+func spritePallete(p *PPU, palette_idx uint8) [4]uint8 {
+	start := 0x11 + uint(palette_idx*4)
+	return [4]uint8{0, p.palette_table[start], p.palette_table[start+1], p.palette_table[start+2]}
 }

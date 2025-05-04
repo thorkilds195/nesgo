@@ -63,7 +63,12 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 	if addr >= RAM && addr <= RAM_MIRRORS_END {
 		mirr_address_down := addr & 0b11111111111
 		b.cpu_vram[mirr_address_down] = val
-	} else if addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END {
+	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
+		mirror_down_addr := addr & 0b00100000_00000111
+		b.MemWrite(mirror_down_addr, val)
+	} else if addr >= 0x8000 && addr <= 0xFFFF {
+		panic("Attempt to write to rom space")
+	} else {
 		switch addr {
 		case 0x2000:
 			b.ppu.WriteToPPUCtrl(val)
@@ -88,12 +93,7 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 				buf[i] = b.MemRead(hi + uint16(i))
 			}
 			b.ppu.WriteToOAMDMA(&buf)
-		default:
-			mirror_down_addr := addr & 0b00100000_00000111
-			b.MemWrite(mirror_down_addr, val)
 		}
-	} else if addr >= 0x8000 && addr <= 0xFFFF {
-		panic("Attempt to write to rom space")
 	}
 }
 
