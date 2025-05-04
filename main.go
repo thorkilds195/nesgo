@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
@@ -13,88 +14,28 @@ const (
 	screenHeight = 240
 )
 
-func colorFromByte(b uint8) (r, g, b2 byte) {
-	switch b {
-	case 0:
-		return 0x00, 0x00, 0x00
-	case 1:
-		return 0xFF, 0xFF, 0xFF
-	case 2, 9:
-		return 0x80, 0x80, 0x80
-	case 3, 10:
-		return 0xFF, 0x00, 0x00
-	case 4, 11:
-		return 0x00, 0xFF, 0x00
-	case 5, 12:
-		return 0x00, 0x00, 0xFF
-	case 6, 13:
-		return 0xFF, 0x00, 0xFF
-	case 7, 14:
-		return 0xFF, 0xFF, 0x00
-	default:
-		return 0x00, 0xFF, 0xFF
-	}
-}
-
-func readScreenState(c *cpu.CPU, g *Emulator) bool {
-	idx := 0
-	update := false
-	buf := g.framebuffer
-	for i := 0x0200; i < 0x0600; i++ {
-		color_idx := c.MemRead(uint16(i))
-		r, g, b := colorFromByte(color_idx)
-		if buf[idx] != r || buf[idx+1] != g || buf[idx+2] != b {
-			buf[idx] = r
-			buf[idx+1] = g
-			buf[idx+2] = b
-			buf[idx+3] = 0xFF
-			update = true
-		}
-		idx += 4
-	}
-	return update
+var keyMap map[ebiten.Key]cpu.JoypadButton = map[ebiten.Key]cpu.JoypadButton{
+	ebiten.KeyArrowDown:  cpu.Down,
+	ebiten.KeyArrowLeft:  cpu.Left,
+	ebiten.KeyArrowRight: cpu.Right,
+	ebiten.KeyArrowUp:    cpu.Up,
+	ebiten.KeySpace:      cpu.Select,
+	ebiten.KeyEnter:      cpu.Start,
+	ebiten.KeyA:          cpu.ButtonA,
+	ebiten.KeyS:          cpu.ButtonB,
 }
 
 func handleUserInput(c *cpu.Joypad) {
-	keyMap := map[ebiten.Key]cpu.JoypadButton{
-		ebiten.KeyArrowDown:  cpu.Down,
-		ebiten.KeyArrowLeft:  cpu.Left,
-		ebiten.KeyArrowRight: cpu.Right,
-		ebiten.KeyArrowUp:    cpu.Up,
-		ebiten.KeySpace:      cpu.Select,
-		ebiten.KeyEnter:      cpu.Start,
-		ebiten.KeyA:          cpu.ButtonA,
-		ebiten.KeyS:          cpu.ButtonB,
-	}
-
 	for key, button := range keyMap {
-		pressed := ebiten.IsKeyPressed(key)
-		c.SetButtonPressedStatus(button, pressed)
+		c.SetButtonPressedStatus(button, inpututil.KeyPressDuration(key) > 0)
 	}
 }
 
 type Emulator struct {
-	framebuffer []byte
-	cpu         *cpu.CPU
-	texture     *ebiten.Image
-	frame       *cpu.Frame
-	drawTime    *bool
-}
-
-func dumpFramebuffer(fb []byte) {
-	for y := 0; y < screenHeight; y++ {
-		for x := 0; x < screenWidth; x++ {
-			idx := (y*screenWidth + x) * 4
-			r := fb[idx]
-			if r > 0 {
-				print("█")
-			} else {
-				print(" ")
-			}
-		}
-		println()
-	}
-	println("-------------------------------------------------")
+	cpu      *cpu.CPU
+	texture  *ebiten.Image
+	frame    *cpu.Frame
+	drawTime *bool
 }
 
 func (e *Emulator) Update() error {
@@ -124,15 +65,13 @@ func (e *Emulator) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func NewEmulator(c *cpu.CPU, f *cpu.Frame, callTrack *bool) *Emulator {
-	fb := make([]byte, screenWidth*screenHeight*4)
 	c.Reset()
 	texture := ebiten.NewImage(screenWidth, screenHeight)
 	return &Emulator{
-		framebuffer: fb,
-		cpu:         c,
-		texture:     texture,
-		frame:       f,
-		drawTime:    callTrack,
+		cpu:      c,
+		texture:  texture,
+		frame:    f,
+		drawTime: callTrack,
 	}
 }
 
