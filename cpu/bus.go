@@ -11,14 +11,17 @@ type Bus struct {
 	ppu          *PPU
 	cycles       uint
 	gameCallback func(*PPU)
+	Joypad       *Joypad
 }
 
 func InitBus(r *Rom, c func(*PPU)) *Bus {
 	p := NewPPU(r.chr_rom, r.screen_mirroring)
+	j := NewJoypad()
 	return &Bus{
 		rom:          r,
 		ppu:          p,
 		gameCallback: c,
+		Joypad:       j,
 	}
 }
 
@@ -54,6 +57,8 @@ func (b *Bus) MemRead(addr uint16) uint8 {
 		}
 	} else if addr >= 0x8000 && addr <= 0xFFFF {
 		return b.readPgrRom(addr)
+	} else if addr == 0x4016 {
+		return b.Joypad.ReadData()
 	}
 	return 0
 }
@@ -93,6 +98,8 @@ func (b *Bus) MemWrite(addr uint16, val uint8) {
 				buf[i] = b.MemRead(hi + uint16(i))
 			}
 			b.ppu.WriteToOAMDMA(&buf)
+		case 0x4016:
+			b.Joypad.WriteData(val)
 		}
 	}
 }

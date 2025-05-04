@@ -284,7 +284,7 @@ type CPU struct {
 	status          uint8
 	program_counter uint16
 	stack_pointer   uint8
-	bus             *Bus
+	Bus             *Bus
 }
 
 func (c *CPU) ProgramCounter() uint16 {
@@ -312,7 +312,7 @@ func (c *CPU) GetStackPointer() uint8 {
 }
 
 func InitCPU(b *Bus) *CPU {
-	return &CPU{bus: b, stack_pointer: STACK_RESET, program_counter: 0x8000, status: 0b100100}
+	return &CPU{Bus: b, stack_pointer: STACK_RESET, program_counter: 0x8000, status: 0b100100}
 }
 
 func (c *CPU) LoadAndRun(program []uint8) {
@@ -335,7 +335,7 @@ func (c *CPU) RunWithCallback(f_call func()) {
 	var op OpCode
 	var ok bool
 	for {
-		if c.bus.PollNMIStatus() != nil {
+		if c.Bus.PollNMIStatus() != nil {
 			c.interrupt_nmi()
 		}
 		f_call()
@@ -348,7 +348,7 @@ func (c *CPU) RunWithCallback(f_call func()) {
 		if opcode == 0x00 || opcode == 0x02 {
 			return
 		}
-		c.bus.Tick(op.cycles)
+		c.Bus.Tick(op.cycles)
 	}
 }
 
@@ -366,7 +366,7 @@ func (c *CPU) Load(program []uint8) {
 }
 
 func (c *CPU) Step(f_call func()) bool {
-	if c.bus.PollNMIStatus() != nil {
+	if c.Bus.PollNMIStatus() != nil {
 		c.interrupt_nmi()
 	}
 	f_call()
@@ -378,7 +378,7 @@ func (c *CPU) Step(f_call func()) bool {
 		panic(fmt.Sprintf("Unknown opcode: %x", opcode))
 	}
 	op.f_call(c, op)
-	c.bus.Tick(op.cycles)
+	c.Bus.Tick(op.cycles)
 	return opcode != 0x00 && opcode != 0x02
 }
 
@@ -406,11 +406,11 @@ func (c *CPU) interrupt_nmi() {
 	c.push(status)
 	c.status |= 0b0000_0100
 	c.program_counter = c.MemRead16(0xFFFA)
-	c.bus.Tick(2)
+	c.Bus.Tick(2)
 }
 
 func (c *CPU) push(val uint8) {
-	c.bus.MemWrite(0x0100+uint16(c.stack_pointer), val)
+	c.Bus.MemWrite(0x0100+uint16(c.stack_pointer), val)
 	c.stack_pointer--
 }
 
@@ -440,16 +440,16 @@ func (c *CPU) doInterrupt(rd_addr uint16) {
 }
 
 func (c *CPU) MemRead(addr uint16) uint8 {
-	return c.bus.MemRead(addr)
+	return c.Bus.MemRead(addr)
 }
 
 func (c *CPU) MemWrite(addr uint16, v uint8) {
-	c.bus.MemWrite(addr, v)
+	c.Bus.MemWrite(addr, v)
 }
 
 func (c *CPU) MemRead16(addr uint16) uint16 {
-	lo := c.bus.MemRead(addr)
-	hi := c.bus.MemRead(addr + 1)
+	lo := c.Bus.MemRead(addr)
+	hi := c.Bus.MemRead(addr + 1)
 	return make_16_bit(hi, lo)
 }
 
@@ -461,8 +461,8 @@ func (c *CPU) mem_read_16_zero(addr uint8) uint16 {
 func (c *CPU) MemWrite16(addr uint16, v uint16) {
 	lo := uint8(v & 0xFF)
 	hi := uint8(v >> 8)
-	c.bus.MemWrite(addr, lo)
-	c.bus.MemWrite(addr+1, hi)
+	c.Bus.MemWrite(addr, lo)
+	c.Bus.MemWrite(addr+1, hi)
 }
 
 func make_16_bit(hi, lo uint8) uint16 {
@@ -662,7 +662,7 @@ func (c *CPU) cmp(op OpCode) {
 	c.program_counter++
 	c.do_compare(val, c.register_a)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -701,9 +701,9 @@ func (c *CPU) bne(op OpCode) {
 	if c.is_zero_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -719,9 +719,9 @@ func (c *CPU) bmi(op OpCode) {
 	if !c.is_negative_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -733,9 +733,9 @@ func (c *CPU) bvs(op OpCode) {
 	if !c.is_overflow_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -747,9 +747,9 @@ func (c *CPU) bpl(op OpCode) {
 	if c.is_negative_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -761,9 +761,9 @@ func (c *CPU) bvc(op OpCode) {
 	if c.is_overflow_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -780,7 +780,7 @@ func (c *CPU) and(op OpCode) {
 	crossed := false
 	c.do_and(c.interpret_mode(op.mode, nil, true, &crossed, false))
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -796,7 +796,7 @@ func (c *CPU) eor(op OpCode) {
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -806,7 +806,7 @@ func (c *CPU) ora(op OpCode) {
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -815,7 +815,7 @@ func (c *CPU) sbc(op OpCode) {
 	val := c.interpret_mode(op.mode, nil, true, &crossed, false)
 	c.do_sbc(val)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 func (c *CPU) do_sbc(val uint8) {
@@ -973,7 +973,7 @@ func (c *CPU) ign(op OpCode) {
 	c.interpret_mode(op.mode, nil, true, &crossed, true)
 	c.program_counter++
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -1114,9 +1114,9 @@ func (c *CPU) bcc(op OpCode) {
 	if c.is_carry_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -1128,9 +1128,9 @@ func (c *CPU) bcs(op OpCode) {
 	if !c.is_carry_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -1142,9 +1142,9 @@ func (c *CPU) beq(op OpCode) {
 	if !c.is_zero_set() {
 		return
 	}
-	c.bus.Tick(1)
+	c.Bus.Tick(1)
 	if c.will_pg_cross(addr) {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 	c.program_counter = addr
 }
@@ -1166,7 +1166,7 @@ func (c *CPU) lda(op OpCode) {
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_a)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -1176,7 +1176,7 @@ func (c *CPU) ldy(op OpCode) {
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_y)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 
@@ -1186,7 +1186,7 @@ func (c *CPU) ldx(op OpCode) {
 	c.program_counter++
 	c.set_zero_and_negative_flag(c.register_x)
 	if crossed {
-		c.bus.Tick(1)
+		c.Bus.Tick(1)
 	}
 }
 

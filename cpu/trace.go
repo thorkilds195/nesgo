@@ -90,7 +90,7 @@ func TraceCPU(c *CPU) string {
 	ret = fmt.Sprintf("%04X  %s%sA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d",
 		c.ProgramCounter(), instr_str, assem_str,
 		c.GetRegisterA(), c.GetRegisterX(), c.GetRegisterY(), c.GetStatus(), c.GetStackPointer(),
-		c.bus.cycles,
+		c.Bus.cycles,
 	)
 	return ret
 }

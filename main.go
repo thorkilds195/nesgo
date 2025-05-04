@@ -55,18 +55,21 @@ func readScreenState(c *cpu.CPU, g *Emulator) bool {
 	return update
 }
 
-func handleUserInput(cpu *cpu.CPU) {
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
-		cpu.MemWrite(0xFF, 0x77)
+func handleUserInput(c *cpu.Joypad) {
+	keyMap := map[ebiten.Key]cpu.JoypadButton{
+		ebiten.KeyArrowDown:  cpu.Down,
+		ebiten.KeyArrowLeft:  cpu.Left,
+		ebiten.KeyArrowRight: cpu.Right,
+		ebiten.KeyArrowUp:    cpu.Up,
+		ebiten.KeySpace:      cpu.Select,
+		ebiten.KeyEnter:      cpu.Start,
+		ebiten.KeyA:          cpu.ButtonA,
+		ebiten.KeyS:          cpu.ButtonB,
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
-		cpu.MemWrite(0xFF, 0x73)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
-		cpu.MemWrite(0xFF, 0x61)
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
-		cpu.MemWrite(0xFF, 0x64)
+
+	for key, button := range keyMap {
+		pressed := ebiten.IsKeyPressed(key)
+		c.SetButtonPressedStatus(button, pressed)
 	}
 }
 
@@ -95,7 +98,7 @@ func dumpFramebuffer(fb []byte) {
 }
 
 func (e *Emulator) Update() error {
-	handleUserInput(e.cpu)
+	handleUserInput(e.cpu.Bus.Joypad)
 	for {
 		alive := e.cpu.Step(func() {})
 
