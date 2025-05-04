@@ -287,6 +287,10 @@ type CPU struct {
 	Bus             *Bus
 }
 
+func (c *CPU) GetCycles() uint {
+	return c.Bus.cycles
+}
+
 func (c *CPU) ProgramCounter() uint16 {
 	return c.program_counter
 }

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"nesgo/cpu"
 	"os"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
@@ -32,14 +35,19 @@ func handleUserInput(c *cpu.Joypad) {
 }
 
 type Emulator struct {
-	cpu      *cpu.CPU
-	texture  *ebiten.Image
-	frame    *cpu.Frame
-	drawTime *bool
+	cpu         *cpu.CPU
+	texture     *ebiten.Image
+	frame       *cpu.Frame
+	drawTime    *bool
+	frameCount  int
+	lastSecond  time.Time
+	internalFPS float64
+	cpuCycles   uint
 }
 
 func (e *Emulator) Update() error {
 	handleUserInput(e.cpu.Bus.Joypad)
+	prevCycles := e.cpu.GetCycles()
 	for {
 		alive := e.cpu.Step(func() {})
 
@@ -51,13 +59,22 @@ func (e *Emulator) Update() error {
 			break
 		}
 	}
+	e.cpuCycles = e.cpu.GetCycles() - prevCycles
 	copyToBuffer(e.frame, e)
+	e.frameCount++
+	now := time.Now()
+	if now.Sub(e.lastSecond) >= time.Second {
+		e.internalFPS = float64(e.frameCount)
+		e.frameCount = 0
+		e.lastSecond = now
+	}
 	return nil
 }
 
 func (e *Emulator) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	screen.DrawImage(e.texture, op)
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("Host FPS: %0.2f\nEmulated FPS: %0.2f\nCPU Cycles: %d", ebiten.ActualFPS(), e.internalFPS, e.cpuCycles))
 }
 
 func (e *Emulator) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -68,10 +85,11 @@ func NewEmulator(c *cpu.CPU, f *cpu.Frame, callTrack *bool) *Emulator {
 	c.Reset()
 	texture := ebiten.NewImage(screenWidth, screenHeight)
 	return &Emulator{
-		cpu:      c,
-		texture:  texture,
-		frame:    f,
-		drawTime: callTrack,
+		cpu:        c,
+		texture:    texture,
+		frame:      f,
+		drawTime:   callTrack,
+		lastSecond: time.Now(),
 	}
 }
 
@@ -121,6 +139,12 @@ func copyToBuffer(f *cpu.Frame, e *Emulator) {
 func main() {
 	ebiten.SetWindowSize(screenWidth*10, screenHeight*10)
 	ebiten.SetWindowTitle("NES Emulator")
+	ebiten.SetVsyncEnabled(true)
+	ebiten.SetScreenClearedEveryFrame(true)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	ebiten.SetWindowFloating(true)
+	ebiten.SetWindowDecorated(true)
+	ebiten.SetTPS(60)
 	dat, err := os.ReadFile("./pacman.nes")
 	if err != nil {
 		panic(err)
